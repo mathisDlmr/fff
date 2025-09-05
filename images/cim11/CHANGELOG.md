@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.1](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.1.0...medical/cim11-v1.1.1) (2025-09-05)
+
+
+### Bug Fixes
+
+* trigger ([133f096](https://github.com/mathisDlmr/fff/commit/133f0969f7ebc1877c03c1d65a479eb6e323e862))
+* trigger ([04a16a6](https://github.com/mathisDlmr/fff/commit/04a16a613bd2edab71b3186c139638522b957bea))
+
+
+### Miscellaneous
+
+* **main:** release medical/cim11 1.1.0 ([b4cc4ee](https://github.com/mathisDlmr/fff/commit/b4cc4eec4b1557b736b0014b2350ca7e16007857))
+* **main:** release medical/cim11 1.1.0 ([e145361](https://github.com/mathisDlmr/fff/commit/e14536188517acd7343a6fc6a2cd726ad32627e2))
+* release main ([c779ae5](https://github.com/mathisDlmr/fff/commit/c779ae5b4365aab4e4efab2a8bfe0b347aa8e59f))
+* release main ([580f4a9](https://github.com/mathisDlmr/fff/commit/580f4a9d92eb34e384d77a6ad6d564e951d30267))
+
 ## [1.1.0](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.0.0...medical/cim11-v1.1.0) (2025-09-05)
 
 
