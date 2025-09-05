@@ -4,3 +4,4 @@ pp
 
 gg
 # Test release automatique
+# Test avec skip-pull-request: true
