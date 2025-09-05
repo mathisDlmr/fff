@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.1.1...medical/cim11-v1.2.0) (2025-09-05)
+
+
+### Features
+
+* trigger ([b25d522](https://github.com/mathisDlmr/fff/commit/b25d522a6197b61757f7fc3300556e90a1935e5d))
+
 ## [1.1.1](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.1.0...medical/cim11-v1.1.1) (2025-09-05)
 
 
