@@ -1,0 +1,29 @@
+name: Build GitHub Runner CI Migrate
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'images/github-runner-ci-migrate/**'
+      - '.github/workflows/github-runner-ci-migrate.yml'
+    branches:
+      - main
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: images/github-runner-ci-migrate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v3.5.0
+        with:
+          ssh-key: ${{ secrets.SSH_KEY_SUBMODULES }}
+          submodules: recursive
+      - name: build and push
+        uses: ./.github/actions/build_push_image
+        with:
+          local-path: images/github-runner-ci-migrate
+          image-path: padoa-tools/github-runner-ci-migrate
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          should-tag-latest: true

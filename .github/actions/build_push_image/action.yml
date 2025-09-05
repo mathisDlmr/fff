@@ -1,0 +1,152 @@
+name: "Build and push IMAGE"
+description: "Build docker image and push it to ACR (with semver tagging via semantic-release)"
+
+inputs:
+  local-path:
+    description: "Path where the dockerfile is located"
+    required: true
+  dockerfile:
+    description: "Dockerfile to use"
+    default: "Dockerfile"
+    required: false
+  image-path:
+    description: "Path where the image will be pushed"
+    required: true
+  should-tag-latest:
+    description: "Boolean set to true if the latest tag should be applied to the image"
+    required: false
+  fixed-tags:
+    description: "List of docker tags that will be published and should not be bumped"
+    required: false
+  github-token:
+    description: "GitHub token for release"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    # =====================================
+    # FLOW 1: Fixed-tags NOT set (most cases)  
+    # - Use release-please with config files for automatic versioning
+    # - Skip PR creation and create release/tags directly
+    # - Store tag and version for building
+    # =====================================
+    - name: Run release-please
+      id: release_please
+      if: ${{ inputs.fixed-tags == '' }}
+      uses: googleapis/release-please-action@v4
+      # uses: google-github-actions/release-please-action@v4
+      with:
+        config-file: ${{ github.workspace }}/.release-please-config.json
+        manifest-file: ${{ github.workspace }}/.release-please-manifest.json
+        token: ${{ inputs.github-token }}
+
+    # - name: Auto-merge release PR if created
+    #   if: ${{ inputs.fixed-tags == '' && steps.release_please.outputs.pr }}
+    #   shell: bash
+    #   run: |
+    #     PR_NUMBER="${{ steps.release_please.outputs.pr }}"
+    #     echo "PR de release créée: #$PR_NUMBER"
+        
+    #     sleep 5
+        
+    #     gh pr merge $PR_NUMBER --auto --squash
+    #     echo "Auto-merge activé pour la PR #$PR_NUMBER"
+        
+    #     TIMEOUT=300
+    #     ELAPSED=0
+    #     while [ $ELAPSED -lt $TIMEOUT ]; do
+    #       if gh pr view $PR_NUMBER --json state | grep -q '"MERGED"'; then
+    #         echo "PR mergée avec succès!"
+    #         break
+    #       fi
+    #       sleep 10
+    #       ELAPSED=$((ELAPSED + 10))
+    #       echo "Attente du merge... (${ELAPSED}s)"
+    #     done
+        
+    #     if [ $ELAPSED -ge $TIMEOUT ]; then
+    #       echo "Timeout: la PR n'a pas été mergée dans les temps impartis"
+    #       exit 1
+    #     fi
+    #   env:
+    #     GITHUB_TOKEN: ${{ inputs.github-token }}
+
+    - name: Get release information after merge
+      id: get_release
+      if: ${{ inputs.fixed-tags == '' }}
+      shell: bash
+      run: |
+        if [ "${{ steps.release_please.outputs.release_created }}" = "true" ]; then
+          sleep 10
+          echo "Release créée par release-please"
+        fi
+        
+        LATEST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" | sort -V | tail -n1)
+        if [ -n "$LATEST_TAG" ]; then
+          VERSION=$(echo "$LATEST_TAG" | sed "s/${{ inputs.image-path }}-v//")
+          echo "new_version=$VERSION" >> $GITHUB_ENV
+          echo "new_tag=$LATEST_TAG" >> $GITHUB_ENV
+          echo "Version trouvée: $VERSION"
+          echo "Tag trouvé: $LATEST_TAG"
+        else
+          echo "Aucun tag trouvé pour ${{ inputs.image-path }}, utilisation de la version par défaut"
+          echo "new_version=1.0.0" >> $GITHUB_ENV
+          echo "new_tag=${{ inputs.image-path }}-v1.0.0" >> $GITHUB_ENV
+        fi
+    # =====================================
+    # FLOW 2: Fixed-tags set (e.g. argocd)
+    # - Store tag and version for fixed tags
+    # - Create GitHub Release for fixed tags
+    # =====================================
+    - name: Handle fixed-tags
+      id: fixed
+      if: ${{ inputs.fixed-tags != '' }}
+      shell: bash
+      run: |
+        echo "new_tag=${{ inputs.image-path }}-${{ inputs.fixed-tags }}" >> $GITHUB_ENV
+        echo "new_version=${{ inputs.fixed-tags }}" >> $GITHUB_ENV
+
+    - name: Create GitHub Release for Fixed Tags
+      if: ${{ inputs.fixed-tags != '' }}
+      shell: bash
+      run: |
+        RELEASE_TAG="${{ env.new_tag }}"
+        RELEASE_TITLE="Release ${{ env.new_tag }}"
+        RELEASE_NOTES="**Changes :**"
+        
+        if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+          gh release create "$RELEASE_TAG" \
+            --title "$RELEASE_TITLE" \
+            --notes "$RELEASE_NOTES"
+        else
+          cat << EOF > /tmp/fixed_release_notes.md
+        $RELEASE_NOTES
+        *${{ github.event.head_commit.message }}(${{ github.sha }})
+        EOF
+          
+          gh release edit "$RELEASE_TAG" \
+            --title "$RELEASE_TITLE" \
+            --notes-file /tmp/fixed_release_notes.md
+        fi
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+
+    # =====================================
+    # COMMON STEPS: Build and push Docker image
+    # - Compute final tags
+    # - Build and push to ACR
+    # - Optional Sysdig security scan
+    # =====================================
+    - name: "compute tags"
+      run: |
+        VERSIONS="${{ env.new_version }}"
+        TAGS="${{ inputs.image-path }}:${{ github.sha }}"
+        for VERSION in ${VERSIONS//,/ } ; do 
+          TAGS="$TAGS,${{ inputs.image-path }}:$VERSION"
+        done
+        if [ "${{ inputs.should-tag-latest }}" = "true" ]; then 
+          TAGS="$TAGS,${{ inputs.image-path }}:latest"
+        fi
+        echo TAGS="$TAGS" >> $GITHUB_ENV
+      shell: bash

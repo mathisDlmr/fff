@@ -1,0 +1,31 @@
+{
+  "release-type": "simple",
+  "include-component-in-tag": true,
+  "include-v-in-tag": true,
+  "skip-github-pull-request": true,
+  "packages": {
+    "images/cim11": {
+      "package-name": "medical/cim11"
+    },
+    "images/cve-alerter": {
+      "package-name": "padoa-tools/cve-alerter"
+    },
+    "images/github-runner-ci-migrate": {
+      "package-name": "padoa-tools/github-runner-ci-migrate"
+    }
+  },
+  "changelog-sections": [
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "chore",
+      "section": "Miscellaneous"
+    }
+  ]
+}

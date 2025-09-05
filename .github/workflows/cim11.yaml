@@ -1,0 +1,27 @@
+name: Build CIM11
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'images/cim11/**'
+      - '.github/workflows/cim11.yaml'
+    branches:
+      - main
+      - patch-semantic-release
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: images/cim11
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+      - name: build and push
+        uses: ./.github/actions/build_push_image
+        with:
+          local-path: images/cim11
+          image-path: medical/cim11
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          should-tag-latest: true
