@@ -41,45 +41,35 @@ runs:
         manifest-file: .release-please-manifest.json
         token: ${{ inputs.github-token }}
 
-    # - name: Auto-merge release PR if created
-    #   if: ${{ inputs.fixed-tags == '' && steps.release_please.outputs.pr }}
-    #   shell: bash
-    #   run: |
-    #     PR_NUMBER="${{ steps.release_please.outputs.pr }}"
-    #     echo "PR de release créée: #$PR_NUMBER"
+    - name: Auto-merge release PR if created
+      if: ${{ inputs.fixed-tags == '' && steps.release_please.outputs.prs_created == 'true' }}
+      shell: bash
+      run: |
+        echo "PRs créées par release-please, activation de l'auto-merge..."
         
-    #     sleep 5
+        PRS='${{ steps.release_please.outputs.prs }}'
         
-    #     gh pr merge $PR_NUMBER --auto --squash
-    #     echo "Auto-merge activé pour la PR #$PR_NUMBER"
-        
-    #     TIMEOUT=300
-    #     ELAPSED=0
-    #     while [ $ELAPSED -lt $TIMEOUT ]; do
-    #       if gh pr view $PR_NUMBER --json state | grep -q '"MERGED"'; then
-    #         echo "PR mergée avec succès!"
-    #         break
-    #       fi
-    #       sleep 10
-    #       ELAPSED=$((ELAPSED + 10))
-    #       echo "Attente du merge... (${ELAPSED}s)"
-    #     done
-        
-    #     if [ $ELAPSED -ge $TIMEOUT ]; then
-    #       echo "Timeout: la PR n'a pas été mergée dans les temps impartis"
-    #       exit 1
-    #     fi
-    #   env:
-    #     GITHUB_TOKEN: ${{ inputs.github-token }}
+        if [ "$PRS" != "" ] && [ "$PRS" != "null" ]; then
+          echo "$PRS" | jq -r '.[].number' | while read PR_NUMBER; do
+            if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+              gh pr merge $PR_NUMBER --auto --squash
+            fi
+          done
+        else
+          echo "Aucune PR à merger automatiquement"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
 
     - name: Get release information after merge
       id: get_release
       if: ${{ inputs.fixed-tags == '' }}
       shell: bash
       run: |
-        if [ "${{ steps.release_please.outputs.release_created }}" = "true" ]; then
+        if [ "${{ steps.release_please.outputs.releases_created }}" = "true" ]; then
           sleep 10
-          echo "Release créée par release-please"
+          echo "Release(s) créée(s) par release-please"
+          echo "Paths released: ${{ steps.release_please.outputs.paths_released }}"
         fi
         
         LATEST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" | sort -V | tail -n1)
