@@ -9,6 +9,7 @@ on:
       - main
       - patch-semantic-release
 
+
 jobs:
   build-push:
     defaults:
