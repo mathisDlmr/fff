@@ -15,7 +15,6 @@
 
 * changelog ([948781b](https://github.com/mathisDlmr/fff/commit/948781bcceb9c9c8a68ce3bbb6a50b2e38c9cca2))
 * changelog ([0c8e201](https://github.com/mathisDlmr/fff/commit/0c8e20164f15a82a20d0fd37a2b7def89b573c04))
-* trigger ([04a16a6](https://github.com/mathisDlmr/fff/commit/04a16a613bd2edab71b3186c139638522b957bea))
 
 
 ### Miscellaneous
