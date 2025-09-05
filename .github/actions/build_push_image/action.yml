@@ -40,7 +40,7 @@ runs:
         config-file: .release-please-config.json
         manifest-file: .release-please-manifest.json
         token: ${{ inputs.github-token }}
-        skip-pull-request: true
+        command: github-release
 
     # - name: Auto-merge release PR if created
     #   if: ${{ inputs.fixed-tags == '' && steps.release_please.outputs.pr }}
