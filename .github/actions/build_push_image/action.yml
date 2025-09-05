@@ -40,7 +40,6 @@ runs:
         config-file: .release-please-config.json
         manifest-file: .release-please-manifest.json
         token: ${{ inputs.github-token }}
-        skip-github-pull-request: true
 
     # - name: Auto-merge release PR if created
     #   if: ${{ inputs.fixed-tags == '' && steps.release_please.outputs.pr }}
@@ -73,88 +72,6 @@ runs:
     #   env:
     #     GITHUB_TOKEN: ${{ inputs.github-token }}
 
-    - name: Fallback - Create release manually if release-please failed
-      id: manual_release
-      if: ${{ inputs.fixed-tags == '' && steps.release_please.outputs.release_created != 'true' }}
-      shell: bash
-      run: |
-        echo "Release-please n'a pas créé de release, on procède manuellement"
-        
-        # Récupérer la dernière version
-        LATEST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" | sort -V | tail -n1)
-        if [ -n "$LATEST_TAG" ]; then
-          CURRENT_VERSION=$(echo "$LATEST_TAG" | sed "s/${{ inputs.image-path }}-v//")
-          echo "Version actuelle: $CURRENT_VERSION"
-        else
-          CURRENT_VERSION="1.0.0"
-          echo "Aucune version précédente, démarrage à $CURRENT_VERSION"
-        fi
-        
-        # Parser les commits pour déterminer le bump
-        COMMITS=$(git log --format="%s" $LATEST_TAG..HEAD 2>/dev/null || git log --format="%s" -10)
-        echo "Commits à analyser: $COMMITS"
-        
-        # Déterminer le type de bump basé sur les commits conventionnels
-        MAJOR_BUMP=false
-        MINOR_BUMP=false
-        PATCH_BUMP=false
-        
-        while IFS= read -r commit; do
-          if [[ $commit =~ ^feat!: ]] || [[ $commit =~ ^fix!: ]] || [[ $commit =~ ^chore!: ]]; then
-            MAJOR_BUMP=true
-          elif [[ $commit =~ ^feat: ]]; then
-            MINOR_BUMP=true
-          elif [[ $commit =~ ^fix: ]] || [[ $commit =~ ^chore: ]]; then
-            PATCH_BUMP=true
-          fi
-        done <<< "$COMMITS"
-        
-        # Calculer la nouvelle version
-        IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
-        MAJOR=${VERSION_PARTS[0]}
-        MINOR=${VERSION_PARTS[1]}
-        PATCH=${VERSION_PARTS[2]}
-        
-        if [ "$MAJOR_BUMP" = true ]; then
-          MAJOR=$((MAJOR + 1))
-          MINOR=0
-          PATCH=0
-        elif [ "$MINOR_BUMP" = true ]; then
-          MINOR=$((MINOR + 1))
-          PATCH=0
-        elif [ "$PATCH_BUMP" = true ]; then
-          PATCH=$((PATCH + 1))
-        else
-          echo "Aucun commit conventionnel trouvé, utilisation de la version actuelle"
-          echo "new_version=$CURRENT_VERSION" >> $GITHUB_ENV
-          echo "new_tag=${{ inputs.image-path }}-v$CURRENT_VERSION" >> $GITHUB_ENV
-          exit 0
-        fi
-        
-        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-        NEW_TAG="${{ inputs.image-path }}-v$NEW_VERSION"
-        
-        echo "Nouvelle version: $NEW_VERSION"
-        echo "Nouveau tag: $NEW_TAG"
-        
-        # Créer le tag
-        git tag $NEW_TAG
-        git push origin $NEW_TAG
-        
-        # Créer la release GitHub
-        gh release create $NEW_TAG \
-          --title "Release $NEW_TAG" \
-          --notes "**Changes depuis la dernière version:**
-        
-        $COMMITS" || echo "Release GitHub creation failed, continuing..."
-        
-        # Exporter les variables
-        echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
-        echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
-        echo "manual_release_created=true" >> $GITHUB_ENV
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-
     - name: Get release information after merge
       id: get_release
       if: ${{ inputs.fixed-tags == '' }}
@@ -163,24 +80,19 @@ runs:
         if [ "${{ steps.release_please.outputs.release_created }}" = "true" ]; then
           sleep 10
           echo "Release créée par release-please"
-        elif [ "${{ env.manual_release_created }}" = "true" ]; then
-          echo "Release créée manuellement"
         fi
         
-        # Si les variables ne sont pas déjà définies, les récupérer
-        if [ -z "${{ env.new_version }}" ]; then
-          LATEST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" | sort -V | tail -n1)
-          if [ -n "$LATEST_TAG" ]; then
-            VERSION=$(echo "$LATEST_TAG" | sed "s/${{ inputs.image-path }}-v//")
-            echo "new_version=$VERSION" >> $GITHUB_ENV
-            echo "new_tag=$LATEST_TAG" >> $GITHUB_ENV
-            echo "Version trouvée: $VERSION"
-            echo "Tag trouvé: $LATEST_TAG"
-          else
-            echo "Aucun tag trouvé pour ${{ inputs.image-path }}, utilisation de la version par défaut"
-            echo "new_version=1.0.0" >> $GITHUB_ENV
-            echo "new_tag=${{ inputs.image-path }}-v1.0.0" >> $GITHUB_ENV
-          fi
+        LATEST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" | sort -V | tail -n1)
+        if [ -n "$LATEST_TAG" ]; then
+          VERSION=$(echo "$LATEST_TAG" | sed "s/${{ inputs.image-path }}-v//")
+          echo "new_version=$VERSION" >> $GITHUB_ENV
+          echo "new_tag=$LATEST_TAG" >> $GITHUB_ENV
+          echo "Version trouvée: $VERSION"
+          echo "Tag trouvé: $LATEST_TAG"
+        else
+          echo "Aucun tag trouvé pour ${{ inputs.image-path }}, utilisation de la version par défaut"
+          echo "new_version=1.0.0" >> $GITHUB_ENV
+          echo "new_tag=${{ inputs.image-path }}-v1.0.0" >> $GITHUB_ENV
         fi
     # =====================================
     # FLOW 2: Fixed-tags set (e.g. argocd)
