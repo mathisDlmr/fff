@@ -39,60 +39,23 @@ runs:
         config-file: ${{ inputs.local-path }}/.release-please-config.json
         manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
         token: ${{ inputs.github-token }}
-        path: ${{ inputs.local-path }}
-        include-component-in-tag: true
-        skip-labeling: true
-        skip-github-pull-request: true
 
-    - name: Auto-merge release PR if created
-      if: ${{ inputs.fixed-tags == '' && steps.release_please.outputs.prs_created == 'true' }}
-      shell: bash
-      run: |
-        echo "PRs créées par release-please, activation de l'auto-merge..."
-        
-        PRS='${{ steps.release_please.outputs.prs }}'
-        if [ "$PRS" != "" ] && [ "$PRS" != "null" ]; then
-          echo "$PRS" | jq -r '.[].number' | while read PR_NUMBER; do
-            if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-              gh pr merge $PR_NUMBER --auto --squash
-            fi
-          done
-          echo "PRs mergées avec succès"
-        else
-          echo "Aucune PR à merger automatiquement"
-        fi
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-
-    - name: Get release information after merge
+    - name: Get release information
       id: get_release
       if: ${{ inputs.fixed-tags == '' }}
       shell: bash
       run: |       
-        echo "steps.release_please.outputs: ${{ steps.release_please.outputs }}"
-        NEW_VERSION="${{ steps.release_please.outputs.version }}"
+        NEW_VERSION="${{ steps.release_please.outputs[format('{0}--version', inputs.local-path)] }}"
         if [ -z "$NEW_VERSION" ]; then
           echo "Aucune version trouvée depuis release-please, récupération du dernier tag"
 
-          LAST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" --sort=-version:refname | head -1)
+          LAST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" --sort=-version:refname | head -1)   # TODO : Vérifier que ça fonctionne 
           if [ -n "$LAST_TAG" ]; then
             NEW_VERSION=$(echo "$LAST_TAG" | sed 's/.*-v//')
             echo "Version récupérée depuis le dernier tag: $NEW_VERSION"
-          else 
-            # Essayer le manifeste local en fallback
-            if [ -f "${{ inputs.local-path }}/.release-please-manifest.json" ]; then
-              LOCAL_VERSION=$(jq -r '.["." ] // empty' "${{ inputs.local-path }}/.release-please-manifest.json")
-              if [ -n "$LOCAL_VERSION" ] && [ "$LOCAL_VERSION" != "null" ]; then
-                NEW_VERSION=$LOCAL_VERSION
-                echo "Version récupérée depuis le manifeste local: $NEW_VERSION"
-              else
-                echo "Aucun tag trouvé, version 1.0.0"
-                NEW_VERSION=1.0.0
-              fi
-            else
-              echo "Aucun tag trouvé, version 1.0.0"
-              NEW_VERSION=1.0.0
-            fi
+          else
+            echo "Aucun tag trouvé, version 1.0.0"
+            NEW_VERSION=1.0.0
           fi
         fi
         NEW_TAG="${{ inputs.image-path }}-v$NEW_VERSION"
