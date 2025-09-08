@@ -31,16 +31,22 @@ runs:
     # - Skip PR creation and create release/tags directly
     # - Store tag and version for building
     # =====================================
+    - name: Set release-please package name
+      id: set_release_please_package_name
+      if: ${{ inputs.fixed-tags == '' }}
+      shell: bash
+      run: |
+        sed -i 's/REPLACE_ME_LOCAL_PATH/${{ inputs.local-path }}/g' .release-please-config.json
+        sed -i 's/REPLACE_ME_IMAGE_PATH/${{ inputs.image-path }}/g' .release-please-config.json
+
     - name: Run release-please
       id: release_please
       if: ${{ inputs.fixed-tags == '' }}
-      continue-on-error: true
       uses: googleapis/release-please-action@v4
       with:
         config-file: .release-please-config.json
         manifest-file: .release-please-manifest.json
         token: ${{ inputs.github-token }}
-        path: ${{ inputs.local-path }}
 
     - name: Auto-merge release PR if created
       if: ${{ inputs.fixed-tags == '' && steps.release_please.outputs.prs_created == 'true' }}
