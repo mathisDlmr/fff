@@ -36,8 +36,8 @@ runs:
       if: ${{ inputs.fixed-tags == '' }}
       shell: bash
       run: |
-        sed -i 's/REPLACE_ME_LOCAL_PATH/${{ inputs.local-path }}/g' .release-please-config.json
-        sed -i 's/REPLACE_ME_IMAGE_PATH/${{ inputs.image-path }}/g' .release-please-config.json
+        sed -i 's|REPLACE_ME_LOCAL_PATH|${{ inputs.local-path }}|g' .release-please-config.json
+        sed -i 's|REPLACE_ME_IMAGE_PATH|${{ inputs.image-path }}|g' .release-please-config.json
 
     - name: Run release-please
       id: release_please
@@ -63,7 +63,7 @@ runs:
           done
           echo "PRs mergées avec succès"
         else
-          echo "ℹAucune PR à merger automatiquement"
+          echo "Aucune PR à merger automatiquement"
         fi
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}

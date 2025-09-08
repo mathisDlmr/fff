@@ -1,9 +1,21 @@
-fdfdsf
-hdhdh
-hhshsh
-hdhdh
-hghghg
-hghgh
-kkk
-sss
-dddd
+ff
+
+pp
+
+gg
+# Test release automatique
+# Test avec skip-pull-request: true
+# Test avec command: github-release
+# Test du système de fallback automatique
+
+tretiudyud
+ug
+
+jfd
+test en fixed
+gyizjf
+gd
+
+ff
+kkkq
+sssssss
