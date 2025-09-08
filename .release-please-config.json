@@ -3,8 +3,14 @@
   "include-v-in-tag": true,
   "skip-labeling": true,
   "packages": {
-    "REPLACE_ME_LOCAL_PATH": {
-      "package-name": "REPLACE_ME_IMAGE_PATH"
+    "images/cim11": {
+      "package-name": "medical/cim11"
+    },
+    "images/cve-alerter": {
+      "package-name": "padoa-tools/cve-alerter"
+    },
+    "images/github-runner-ci-migrate": {
+      "package-name": "padoa-tools/github-runner-ci-migrate"
     }
   },
   "changelog-sections": [
