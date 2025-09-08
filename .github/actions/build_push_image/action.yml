@@ -41,7 +41,6 @@ runs:
         token: ${{ inputs.github-token }}
         path: ${{ inputs.local-path }}
         include-component-in-tag: true
-        include-v-in-tag: true
         skip-labeling: true
         skip-github-pull-request: true
 
@@ -70,7 +69,7 @@ runs:
       if: ${{ inputs.fixed-tags == '' }}
       shell: bash
       run: |       
-        # Avec la config locale, la clé est maintenant "." dans les outputs
+        echo "steps.release_please.outputs: ${{ steps.release_please.outputs }}"
         NEW_VERSION="${{ steps.release_please.outputs.version }}"
         if [ -z "$NEW_VERSION" ]; then
           echo "Aucune version trouvée depuis release-please, récupération du dernier tag"
