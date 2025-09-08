@@ -40,6 +40,37 @@ runs:
         manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
         token: ${{ inputs.github-token }}
 
+    - name: Debug release-please outputs
+      if: ${{ inputs.fixed-tags == '' }}
+      shell: bash
+      run: |
+        echo "=== DEBUG: Analyse complète des outputs release-please ==="
+        echo "releases_created: '${{ steps.release_please.outputs.releases_created }}'"
+        echo "release_created: '${{ steps.release_please.outputs.release_created }}'"
+        echo "version: '${{ steps.release_please.outputs.version }}'"
+        echo "tag_name: '${{ steps.release_please.outputs.tag_name }}'"
+        echo "pr: '${{ steps.release_please.outputs.pr }}'"
+        echo "prs: '${{ steps.release_please.outputs.prs }}'"
+        echo "prs_created: '${{ steps.release_please.outputs.prs_created }}'"
+        
+        echo "=== Outputs avec format dynamique ==="
+        echo "Format avec local-path: '${{ steps.release_please.outputs[format('{0}--version', inputs.local-path)] }}'"
+        echo "Format avec image-path: '${{ steps.release_please.outputs[format('{0}--version', inputs.image-path)] }}'"
+        echo "Format avec '.': '${{ steps.release_please.outputs['.--version'] }}'"
+        
+        echo "=== Outputs JSON complets (si disponibles) ==="
+        if [ -n "${{ steps.release_please.outputs.releases }}" ]; then
+          echo "releases:"
+          echo '${{ steps.release_please.outputs.releases }}' | jq '.' || echo "Erreur JSON releases"
+        fi
+        
+        if [ -n "${{ steps.release_please.outputs.paths_released }}" ]; then
+          echo "paths_released:"
+          echo '${{ steps.release_please.outputs.paths_released }}' | jq '.' || echo "Erreur JSON paths_released"
+        fi
+        
+        echo "=== Fin debug outputs ==="
+
     - name: Get release information
       id: get_release
       if: ${{ inputs.fixed-tags == '' }}
