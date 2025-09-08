@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.2.0...medical/cim11-v1.2.1) (2025-09-08)
+
+
+### Bug Fixes
+
+* release note for fixed-tags ([80e0310](https://github.com/mathisDlmr/fff/commit/80e03100a9f5c6cd5cdaeb655e2ad10f2fd64d13))
+
 ## [1.2.0](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.1.1...medical/cim11-v1.2.0) (2025-09-05)
 
 

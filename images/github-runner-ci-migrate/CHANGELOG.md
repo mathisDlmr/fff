@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6](https://github.com/mathisDlmr/fff/compare/padoa-tools/github-runner-ci-migrate-v1.0.5...padoa-tools/github-runner-ci-migrate-v1.0.6) (2025-09-08)
+
+
+### Bug Fixes
+
+* release note for fixed-tags ([80e0310](https://github.com/mathisDlmr/fff/commit/80e03100a9f5c6cd5cdaeb655e2ad10f2fd64d13))
+
 ## [1.0.5](https://github.com/mathisDlmr/fff/compare/padoa-tools/github-runner-ci-migrate-v1.0.4...padoa-tools/github-runner-ci-migrate-v1.0.5) (2025-09-08)
 
 

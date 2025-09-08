@@ -1,5 +1,5 @@
 {
-  "images/cim11": "1.2.0",
+  "images/cim11": "1.2.1",
   "images/cve-alerter": "1.0.1",
-  "images/github-runner-ci-migrate": "1.0.5"
+  "images/github-runner-ci-migrate": "1.0.6"
 }
