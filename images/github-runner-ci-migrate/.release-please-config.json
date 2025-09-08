@@ -1,6 +1,5 @@
 {
   "include-v-in-tag": true,
-  "skip-github-pull-request": true,
   "skip-labeling": true,
   "packages": {
     ".": {

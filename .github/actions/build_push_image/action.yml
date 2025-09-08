@@ -45,7 +45,7 @@ runs:
       if: ${{ inputs.fixed-tags == '' }}
       shell: bash
       run: |       
-        NEW_VERSION="${{ steps.release_please.outputs[format('{0}--version', inputs.local-path)] }}"
+        NEW_VERSION="${{ steps.release_please.outputs.version }}"
         if [ -z "$NEW_VERSION" ]; then
           echo "Aucune version trouvée depuis release-please, récupération du dernier tag"
 
