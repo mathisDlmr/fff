@@ -35,7 +35,6 @@ runs:
       id: release_please
       if: ${{ inputs.fixed-tags == '' }}
       uses: googleapis/release-please-action@v4
-      # uses: google-github-actions/release-please-action@v4
       with:
         config-file: .release-please-config.json
         manifest-file: .release-please-manifest.json
@@ -48,15 +47,15 @@ runs:
         echo "PRs créées par release-please, activation de l'auto-merge..."
         
         PRS='${{ steps.release_please.outputs.prs }}'
-        
         if [ "$PRS" != "" ] && [ "$PRS" != "null" ]; then
           echo "$PRS" | jq -r '.[].number' | while read PR_NUMBER; do
             if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
               gh pr merge $PR_NUMBER --auto --squash
             fi
           done
+          echo "PRs mergées avec succès"
         else
-          echo "Aucune PR à merger automatiquement"
+          echo "ℹAucune PR à merger automatiquement"
         fi
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
@@ -65,25 +64,17 @@ runs:
       id: get_release
       if: ${{ inputs.fixed-tags == '' }}
       shell: bash
-      run: |
-        if [ "${{ steps.release_please.outputs.releases_created }}" = "true" ]; then
-          sleep 10
-          echo "Release(s) créée(s) par release-please"
-          echo "Paths released: ${{ steps.release_please.outputs.paths_released }}"
+      run: |       
+        echo "release-please outputs: ${{ steps.release_please.outputs }}"
+
+        NEW_VERSION = {{ steps.release_please.outputs[${{ inputs.local-path }}--version] }}
+        if [ -z "$NEW_VERSION" ]; then
+          echo "Aucune version trouvée, utilisation de la version par défaut"
+          NEW_VERSION=1.0.0
         fi
-        
-        LATEST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" | sort -V | tail -n1)
-        if [ -n "$LATEST_TAG" ]; then
-          VERSION=$(echo "$LATEST_TAG" | sed "s/${{ inputs.image-path }}-v//")
-          echo "new_version=$VERSION" >> $GITHUB_ENV
-          echo "new_tag=$LATEST_TAG" >> $GITHUB_ENV
-          echo "Version trouvée: $VERSION"
-          echo "Tag trouvé: $LATEST_TAG"
-        else
-          echo "Aucun tag trouvé pour ${{ inputs.image-path }}, utilisation de la version par défaut"
-          echo "new_version=1.0.0" >> $GITHUB_ENV
-          echo "new_tag=${{ inputs.image-path }}-v1.0.0" >> $GITHUB_ENV
-        fi
+        NEW_TAG = ${{{{ inputs.image-path }}-v$NEW_VERSION}
+        echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
+        echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
     # =====================================
     # FLOW 2: Fixed-tags set (e.g. argocd)
     # - Store tag and version for fixed tags
