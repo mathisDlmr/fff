@@ -38,6 +38,7 @@ runs:
       run: |
         sed -i 's|REPLACE_ME_LOCAL_PATH|${{ inputs.local-path }}|g' .release-please-config.json
         sed -i 's|REPLACE_ME_IMAGE_PATH|${{ inputs.image-path }}|g' .release-please-config.json
+        cat .release-please-config.json
 
     - name: Run release-please
       id: release_please
