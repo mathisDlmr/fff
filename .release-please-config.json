@@ -1,6 +1,7 @@
 {
   "include-component-in-tag": true,
   "include-v-in-tag": true,
+  "skip-labeling": true,
   "packages": {
     "images/cim11": {
       "package-name": "medical/cim11"

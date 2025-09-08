@@ -34,6 +34,7 @@ runs:
     - name: Run release-please
       id: release_please
       if: ${{ inputs.fixed-tags == '' }}
+      continue-on-error: true
       uses: googleapis/release-please-action@v4
       with:
         config-file: .release-please-config.json
@@ -67,8 +68,16 @@ runs:
       run: |       
         NEW_VERSION="${{ steps.release_please.outputs[format('{0}--version', inputs.local-path)] }}"
         if [ -z "$NEW_VERSION" ]; then
-          echo "Aucune version trouvée, utilisation de la version par défaut"
-          NEW_VERSION=1.0.0
+          echo "Aucune version trouvée depuis release-please, récupération du dernier tag"
+
+          LAST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" --sort=-version:refname | head -1)
+          if [ -n "$LAST_TAG" ]; then
+            NEW_VERSION=$(echo "$LAST_TAG" | sed 's/.*-v//')
+            echo "Version récupérée depuis le dernier tag: $NEW_VERSION"
+          else 
+            echo "Aucun tag trouvé, version 1.0.0"
+            NEW_VERSION=1.0.0
+          fi
         fi
         NEW_TAG="${{ inputs.image-path }}-v$NEW_VERSION"
         echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
