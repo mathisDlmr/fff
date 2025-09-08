@@ -86,27 +86,30 @@ runs:
         echo "new_tag=${{ inputs.image-path }}-${{ inputs.fixed-tags }}" >> $GITHUB_ENV
         echo "new_version=${{ inputs.fixed-tags }}" >> $GITHUB_ENV
 
-    - name: Create GitHub Release for Fixed Tags
+    - name: Create or Update GitHub Release for Fixed Tags
       if: ${{ inputs.fixed-tags != '' }}
       shell: bash
       run: |
         RELEASE_TAG="${{ env.new_tag }}"
         RELEASE_TITLE="Release ${{ env.new_tag }}"
-        RELEASE_NOTES="**Changes :**"
+        COMMIT_MSG="${{ github.event.head_commit.message }}"
+        COMMIT_SHA="${{ github.sha }}"
         
         if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+          cat << EOF > /tmp/release_notes.md
+        **Changes :**
+        * $COMMIT_MSG ($COMMIT_SHA)
+        EOF
           gh release create "$RELEASE_TAG" \
             --title "$RELEASE_TITLE" \
-            --notes "$RELEASE_NOTES"
+            --notes-file /tmp/release_notes.md
         else
-          cat << EOF > /tmp/fixed_release_notes.md
-        $RELEASE_NOTES
-        *${{ github.event.head_commit.message }}(${{ github.sha }})
-        EOF
+          gh release view "$RELEASE_TAG" --json body -q ".body" > /tmp/release_notes.md
+          echo "* $COMMIT_MSG ($COMMIT_SHA)" >> /tmp/release_notes.md
           
           gh release edit "$RELEASE_TAG" \
             --title "$RELEASE_TITLE" \
-            --notes-file /tmp/fixed_release_notes.md
+            --notes-file /tmp/release_notes.md
         fi
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
