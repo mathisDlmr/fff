@@ -40,6 +40,7 @@ runs:
         config-file: .release-please-config.json
         manifest-file: .release-please-manifest.json
         token: ${{ inputs.github-token }}
+        path: ${{ inputs.local-path }}
 
     - name: Auto-merge release PR if created
       if: ${{ inputs.fixed-tags == '' && steps.release_please.outputs.prs_created == 'true' }}
