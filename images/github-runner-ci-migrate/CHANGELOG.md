@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.0.7](https://github.com/mathisDlmr/fff/compare/padoa-tools/github-runner-ci-migrate-v1.0.6...padoa-tools/github-runner-ci-migrate-v1.0.7) (2025-09-08)
+
+
+### Bug Fixes
+
+* changelog ([0c8e201](https://github.com/mathisDlmr/fff/commit/0c8e20164f15a82a20d0fd37a2b7def89b573c04))
+* merge ([258ac48](https://github.com/mathisDlmr/fff/commit/258ac48b199e381d248e0310f78c54dc78f3385a))
+* release note for fixed-tags ([80e0310](https://github.com/mathisDlmr/fff/commit/80e03100a9f5c6cd5cdaeb655e2ad10f2fd64d13))
+* syntax error ([c096cb8](https://github.com/mathisDlmr/fff/commit/c096cb8e0ce5ef2e433fc0dcd2f2667945bc3a39))
+* syntax error ([79aa78a](https://github.com/mathisDlmr/fff/commit/79aa78a85bea9e2571b112a6654e8ab2d5429b02))
+* syntax error ([c35f013](https://github.com/mathisDlmr/fff/commit/c35f013dbc6834c031a8ec390e493ad929e4492e))
+* trigger ([22e7173](https://github.com/mathisDlmr/fff/commit/22e717338dff226cf75f5a5c89c0f83767f38b50))
+
+
+### Miscellaneous
+
+* **main:** release padoa-tools/github-runner-ci-migrate 1.0.1 ([eb6c50f](https://github.com/mathisDlmr/fff/commit/eb6c50f3575b6b822d8bdee6ee4d8aa4cc81e04d))
+* **main:** release padoa-tools/github-runner-ci-migrate 1.0.1 ([66e2a3f](https://github.com/mathisDlmr/fff/commit/66e2a3f3620da847b42af53dd3f26191e564c1b0))
+* release main ([#10](https://github.com/mathisDlmr/fff/issues/10)) ([2de59f6](https://github.com/mathisDlmr/fff/commit/2de59f6ec8cf9c8fc20ae8dde505f35237adb58a))
+* release main ([#11](https://github.com/mathisDlmr/fff/issues/11)) ([3014ae7](https://github.com/mathisDlmr/fff/commit/3014ae749d1375767335ba599ed7530cecb74dde))
+* release main ([#8](https://github.com/mathisDlmr/fff/issues/8)) ([3555a59](https://github.com/mathisDlmr/fff/commit/3555a59d93dca91d24572bfa803f1ce3ff8873be))
+* release main ([#9](https://github.com/mathisDlmr/fff/issues/9)) ([7ea44fb](https://github.com/mathisDlmr/fff/commit/7ea44fba1deb2e93f870d0882848cd1d0df4a0ea))
+
 ## [1.0.6](https://github.com/mathisDlmr/fff/compare/padoa-tools/github-runner-ci-migrate-v1.0.5...padoa-tools/github-runner-ci-migrate-v1.0.6) (2025-09-08)
 
 
