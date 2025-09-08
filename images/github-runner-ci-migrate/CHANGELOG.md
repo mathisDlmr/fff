@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/mathisDlmr/fff/compare/padoa-tools/github-runner-ci-migrate-v1.0.3...padoa-tools/github-runner-ci-migrate-v1.0.4) (2025-09-08)
+
+
+### Bug Fixes
+
+* syntax error ([79aa78a](https://github.com/mathisDlmr/fff/commit/79aa78a85bea9e2571b112a6654e8ab2d5429b02))
+
 ## [1.0.3](https://github.com/mathisDlmr/fff/compare/padoa-tools/github-runner-ci-migrate-v1.0.2...padoa-tools/github-runner-ci-migrate-v1.0.3) (2025-09-08)
 
 
