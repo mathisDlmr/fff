@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.8](https://github.com/mathisDlmr/fff/compare/padoa-tools/github-runner-ci-migrate-v1.0.7...padoa-tools/github-runner-ci-migrate-v1.0.8) (2025-09-08)
+
+
+### Bug Fixes
+
+* ci trugger ([a3d67d4](https://github.com/mathisDlmr/fff/commit/a3d67d455d5260e1ad1b5482781a8599eb5a095b))
+* trigger ci ([4cc15b4](https://github.com/mathisDlmr/fff/commit/4cc15b4caa77a268c508ea39a670c159630bb1b6))
+
 ## [1.0.7](https://github.com/mathisDlmr/fff/compare/padoa-tools/github-runner-ci-migrate-v1.0.6...padoa-tools/github-runner-ci-migrate-v1.0.7) (2025-09-08)
 
 
