@@ -7,6 +7,21 @@
 
 * edit release to have a correct name after release-please ([7e03bc8](https://github.com/mathisDlmr/fff/commit/7e03bc86f2bf529a1ae9a55aa86792d233a086cb))
 * output is release_created and not releases_created ([b5dc142](https://github.com/mathisDlmr/fff/commit/b5dc142700428312c2d49940e3f7db1ef8d27b91))
+* trigger ci ([b7c1599](https://github.com/mathisDlmr/fff/commit/b7c1599e985f1639f78f7c38b3362e17d430ceee))
+
+
+### Miscellaneous
+
+* **main:** release medical/cim11 1.1.1 ([ba82525](https://github.com/mathisDlmr/fff/commit/ba82525eacba0d809197d4606a33058eda4798d4))
+* **main:** release medical/cim11 1.1.1 ([b81f977](https://github.com/mathisDlmr/fff/commit/b81f977d4e689033609fad6b8e39fc4e81bf8325))
+
+## [1.1.1](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.1.0...medical/cim11-v1.1.1) (2025-09-09)
+
+
+### Bug Fixes
+
+* edit release to have a correct name after release-please ([7e03bc8](https://github.com/mathisDlmr/fff/commit/7e03bc86f2bf529a1ae9a55aa86792d233a086cb))
+* output is release_created and not releases_created ([b5dc142](https://github.com/mathisDlmr/fff/commit/b5dc142700428312c2d49940e3f7db1ef8d27b91))
 
 ## [1.1.0](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.0.0...medical/cim11-v1.1.0) (2025-09-09)
 
