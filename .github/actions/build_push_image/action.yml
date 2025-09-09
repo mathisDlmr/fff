@@ -30,7 +30,7 @@ runs:
       uses: googleapis/release-please-action@v4
       with:
         config-file: ${{ inputs.local-path }}/.release-please-config.json
-        manifest-file: .release-please-manifest.json
+        manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
         token: ${{ inputs.github-token }}
 
     - name: Get release information once release-please PR is merged
