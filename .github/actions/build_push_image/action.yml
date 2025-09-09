@@ -90,10 +90,11 @@ runs:
         file: ${{ inputs.local-path }}/${{ inputs.dockerfile }}
 
     - name: Build and push
-      if: ${{ !steps.release_please.outputs.releases_created }}
+      if: ${{ steps.release_please.outputs.releases_created }}
       shell: bash
       run: |
         echo "Building and pushing image"
+        echo "TAGS: ${{ env.TAGS }}"
         echo "PUSH: true"
 
     # - name: Build and push
