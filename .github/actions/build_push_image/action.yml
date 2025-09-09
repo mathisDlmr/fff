@@ -28,6 +28,7 @@ runs:
     - name: Run release-please
       id: release_please
       uses: googleapis/release-please-action@v4
+      if: ${{ github.ref == 'refs/heads/main' }}
       with:
         config-file: ${{ inputs.local-path }}/.release-please-config.json
         manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
@@ -39,9 +40,15 @@ runs:
       shell: bash
       run: |       
         NEW_VERSION="${{ steps.release_please.outputs.version }}"
-        NEW_TAG="${{ inputs.image-path }}-v$NEW_VERSION"
+        NEW_TAG="${{ inputs.image-path }}:v$NEW_VERSION"
         echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
         echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
+
+    - name: Fix release-please release and tagging
+      if: ${{ steps.release_please.outputs.releases_created }}
+      shell: bash
+      run: |
+        gh release edit ${{ steps.release_please.outputs.tag_name }} --title ${{ env.new_tag }}
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
