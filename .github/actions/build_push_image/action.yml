@@ -29,12 +29,9 @@ runs:
       id: release_please
       uses: googleapis/release-please-action@v4
       with:
+        config-file: ${{ inputs.local-path }}/.release-please-config.json
+        manifest-file: .release-please-manifest.json
         token: ${{ inputs.github-token }}
-        path: ${{ inputs.local-path }}
-        release-type: "simple"
-        include-component-in-tag: true
-        include-v-in-tag: true
-        skip-labeling: true
 
     - name: Get release information once release-please PR is merged
       id: get_release
