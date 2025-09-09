@@ -6,8 +6,6 @@ on:
     paths:
       - 'images/github-runner-ci-migrate/**'
       - '.github/workflows/github-runner-ci-migrate.yml'
-    branches:
-      - main
 
 permissions:
   contents: write

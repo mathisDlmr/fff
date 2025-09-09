@@ -15,9 +15,9 @@ inputs:
   should-tag-latest:
     description: "Boolean set to true if the latest tag should be applied to the image"
     required: false
-  fixed-tags:
-    description: "List of docker tags that will be published and should not be bumped"
-    required: false
+  platforms:
+    description: "architecture for the build (linux/amd64,linux/arm64,linux/arm/v7)"
+    required: true
   github-token:
     description: "GitHub token for release"
     required: true
@@ -25,129 +25,105 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # =====================================
-    # FLOW 1: Fixed-tags NOT set (most cases)  
-    # - Use release-please with config files for automatic versioning
-    # - Skip PR creation and create release/tags directly
-    # - Store tag and version for building
-    # =====================================
     - name: Run release-please
       id: release_please
-      if: ${{ inputs.fixed-tags == '' }}
       uses: googleapis/release-please-action@v4
       with:
-        config-file: ${{ inputs.local-path }}/.release-please-config.json
-        manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
         token: ${{ inputs.github-token }}
+        path: ${{ inputs.local-path }}
+        release-type: "simple"
+        include-component-in-tag: true
+        include-v-in-tag: true
+        skip-labeling: true
 
-    - name: Debug release-please outputs
-      if: ${{ inputs.fixed-tags == '' }}
-      shell: bash
-      run: |
-        echo "=== DEBUG: Analyse complète des outputs release-please ==="
-        echo "releases_created: '${{ steps.release_please.outputs.releases_created }}'"
-        echo "release_created: '${{ steps.release_please.outputs.release_created }}'"
-        echo "version: '${{ steps.release_please.outputs.version }}'"
-        echo "tag_name: '${{ steps.release_please.outputs.tag_name }}'"
-        echo "pr: '${{ steps.release_please.outputs.pr }}'"
-        echo "prs: '${{ steps.release_please.outputs.prs }}'"
-        echo "prs_created: '${{ steps.release_please.outputs.prs_created }}'"
-        
-        echo "=== Outputs avec format dynamique ==="
-        echo "Format avec local-path: '${{ steps.release_please.outputs[format('{0}--version', inputs.local-path)] }}'"
-        echo "Format avec image-path: '${{ steps.release_please.outputs[format('{0}--version', inputs.image-path)] }}'"
-        echo "Format avec '.': '${{ steps.release_please.outputs['.--version'] }}'"
-        
-        echo "=== Outputs JSON complets (si disponibles) ==="
-        if [ -n "${{ steps.release_please.outputs.releases }}" ]; then
-          echo "releases:"
-          echo '${{ steps.release_please.outputs.releases }}' | jq '.' || echo "Erreur JSON releases"
-        fi
-        
-        if [ -n "${{ steps.release_please.outputs.paths_released }}" ]; then
-          echo "paths_released:"
-          echo '${{ steps.release_please.outputs.paths_released }}' | jq '.' || echo "Erreur JSON paths_released"
-        fi
-        
-        echo "=== Fin debug outputs ==="
-
-    - name: Get release information
+    - name: Get release information once release-please PR is merged
       id: get_release
-      if: ${{ inputs.fixed-tags == '' }}
+      if: ${{ steps.release_please.outputs.releases_created }}
       shell: bash
       run: |       
         NEW_VERSION="${{ steps.release_please.outputs.version }}"
-        if [ -z "$NEW_VERSION" ]; then
-          echo "Aucune version trouvée depuis release-please, récupération du dernier tag"
-
-          LAST_TAG=$(git tag -l "${{ inputs.image-path }}-v*" --sort=-version:refname | head -1)   # TODO : Vérifier que ça fonctionne 
-          if [ -n "$LAST_TAG" ]; then
-            NEW_VERSION=$(echo "$LAST_TAG" | sed 's/.*-v//')
-            echo "Version récupérée depuis le dernier tag: $NEW_VERSION"
-          else
-            echo "Aucun tag trouvé, version 1.0.0"
-            NEW_VERSION=1.0.0
-          fi
-        fi
         NEW_TAG="${{ inputs.image-path }}-v$NEW_VERSION"
         echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
         echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
-    # =====================================
-    # FLOW 2: Fixed-tags set (e.g. argocd)
-    # - Store tag and version for fixed tags
-    # - Create GitHub Release for fixed tags
-    # =====================================
-    - name: Handle fixed-tags
-      id: fixed
-      if: ${{ inputs.fixed-tags != '' }}
-      shell: bash
-      run: |
-        echo "new_tag=${{ inputs.image-path }}-${{ inputs.fixed-tags }}" >> $GITHUB_ENV
-        echo "new_version=${{ inputs.fixed-tags }}" >> $GITHUB_ENV
 
-    - name: Create or Update GitHub Release for Fixed Tags
-      if: ${{ inputs.fixed-tags != '' }}
-      shell: bash
-      run: |
-        RELEASE_TAG="${{ env.new_tag }}"
-        RELEASE_TITLE="Release ${{ env.new_tag }}"
-        COMMIT_MSG="${{ github.event.head_commit.message }}"
-        COMMIT_SHA="${{ github.sha }}"
-        
-        if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-          cat << EOF > /tmp/release_notes.md
-        **Changes :**
-        * $COMMIT_MSG ($COMMIT_SHA)
-        EOF
-          gh release create "$RELEASE_TAG" \
-            --title "$RELEASE_TITLE" \
-            --notes-file /tmp/release_notes.md
-        else
-          gh release view "$RELEASE_TAG" --json body -q ".body" > /tmp/release_notes.md
-          echo "* $COMMIT_MSG ($COMMIT_SHA)" >> /tmp/release_notes.md
-          
-          gh release edit "$RELEASE_TAG" \
-            --title "$RELEASE_TITLE" \
-            --notes-file /tmp/release_notes.md
-        fi
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
 
-    # =====================================
-    # COMMON STEPS: Build and push Docker image
-    # - Compute final tags
-    # - Build and push to ACR
-    # - Optional Sysdig security scan
-    # =====================================
+    - name: Set up Docker Buildx
+      id: buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: ${{ inputs.platforms }}
+
+    - name: Login to ACR
+      shell: bash
+      if: ${{ steps.release_please.outputs.releases_created }}
+      run: |
+        echo "Logging in to ACR"
+
+    # - name: Login to ACR
+    #   uses: azure/docker-login@v2
+    #   if: ${{ steps.release_please.outputs.releases_created }}
+    #   with:
+    #     login-server: ${{ inputs.acr-host }}
+    #     username: ${{ inputs.acr-push-user }}
+    #     password: ${{ inputs.acr-push-password }}
+
     - name: "compute tags"
+      if: ${{ steps.release_please.outputs.releases_created }}
+      shell: bash
       run: |
         VERSIONS="${{ env.new_version }}"
-        TAGS="${{ inputs.image-path }}:${{ github.sha }}"
+        TAGS="${{ inputs.acr-host }}/${{ inputs.image-path }}:${{ github.sha }}"
         for VERSION in ${VERSIONS//,/ } ; do 
-          TAGS="$TAGS,${{ inputs.image-path }}:$VERSION"
+          TAGS="$TAGS,${{ inputs.acr-host }}/${{ inputs.image-path }}:$VERSION"
         done
         if [ "${{ inputs.should-tag-latest }}" = "true" ]; then 
-          TAGS="$TAGS,${{ inputs.image-path }}:latest"
+          TAGS="$TAGS,${{ inputs.acr-host }}/${{ inputs.image-path }}:latest"
         fi
         echo TAGS="$TAGS" >> $GITHUB_ENV
+
+    - name: Build (no push)
+      uses: docker/build-push-action@v5
+      if: ${{ !steps.release_please.outputs.releases_created }}
+      with:
+        context: ${{ inputs.local-path }}
+        platforms: ${{ inputs.platforms }}
+        push: false
+        file: ${{ inputs.local-path }}/${{ inputs.dockerfile }}
+
+    - name: Build and push
+      if: ${{ !steps.release_please.outputs.releases_created }}
       shell: bash
+      run: |
+        echo "Building and pushing image"
+        echo "PUSH: true"
+
+    # - name: Build and push
+    #   uses: docker/build-push-action@v5
+    #   if: ${{ steps.release_please.outputs.releases_created }}
+    #   with:
+    #     context: ${{ inputs.local-path }}
+    #     build-args: |
+    #       AZDO_NPM_REGISTRY_PULL_TOKEN="${{ inputs.azdo-pull-token }}"
+    #       PG_VERSION=${{ inputs.pg-version }}
+    #       NODE_VERSION=${{ inputs.node-version }}
+    #       ES_VERSION=${{ inputs.es-version }}
+    #     platforms: ${{ inputs.platforms }}
+    #     push: true
+    #     tags: ${{ env.TAGS }}
+    #     file: ${{ inputs.local-path }}/${{ inputs.dockerfile }}
+
+    # - name: Sysdig secure scan
+    #   if: ${{ inputs.sysdig-api-token != '' && steps.release_please.outputs.releases_created }}
+    #   uses: sysdiglabs/scan-action@v5
+    #   with:
+    #     image-tag: ${{ inputs.acr-host }}/${{ inputs.image-path }}:${{ github.sha }}
+    #     # API token for Sysdig Scanning auth
+    #     sysdig-secure-token: ${{ inputs.sysdig-api-token }}
+    #     sysdig-secure-url: "https://eu1.app.sysdig.com"
+    #     registry-user: ${{ inputs.acr-push-user }}
+    #     registry-password: ${{ inputs.acr-push-password }}
+    #     # dockerfile-path: ${{ inputs.local-path }}
+    #     # input-type: docker-daemon
+    #     ignore-failed-scan: true

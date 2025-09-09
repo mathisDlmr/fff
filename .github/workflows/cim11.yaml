@@ -6,9 +6,6 @@ on:
     paths:
       - 'images/cim11/**'
       - '.github/workflows/cim11.yaml'
-    branches:
-      - main
-      - patch-semantic-release
 
 permissions:
   contents: write
