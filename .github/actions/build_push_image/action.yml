@@ -28,6 +28,7 @@ runs:
     - name: Run release-please
       id: release_please
       uses: googleapis/release-please-action@v4
+      if: ${{ github.ref == 'refs/heads/main' }}
       with:
         config-file: ${{ inputs.local-path }}/.release-please-config.json
         manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
@@ -35,13 +36,21 @@ runs:
 
     - name: Get release information once release-please PR is merged
       id: get_release
-      if: ${{ steps.release_please.outputs.releases_created }}
+      if: ${{ steps.release_please.outputs.release_created }}
       shell: bash
       run: |       
         NEW_VERSION="${{ steps.release_please.outputs.version }}"
-        NEW_TAG="${{ inputs.image-path }}-v$NEW_VERSION"
+        NEW_TAG="${{ inputs.image-path }}:v$NEW_VERSION"
         echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
         echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
+
+    - name: Fix release-please release and tagging
+      if: ${{ steps.release_please.outputs.release_created }}
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        gh release edit ${{ steps.release_please.outputs.tag_name }} --title ${{ env.new_tag }}
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -54,20 +63,20 @@ runs:
 
     - name: Login to ACR
       shell: bash
-      if: ${{ steps.release_please.outputs.releases_created }}
+      if: ${{ steps.release_please.outputs.release_created }}
       run: |
         echo "Logging in to ACR"
 
     # - name: Login to ACR
     #   uses: azure/docker-login@v2
-    #   if: ${{ steps.release_please.outputs.releases_created }}
+    #   if: ${{ steps.release_please.outputs.release_created }}
     #   with:
     #     login-server: ${{ inputs.acr-host }}
     #     username: ${{ inputs.acr-push-user }}
     #     password: ${{ inputs.acr-push-password }}
 
     - name: "compute tags"
-      if: ${{ steps.release_please.outputs.releases_created }}
+      if: ${{ steps.release_please.outputs.release_created }}
       shell: bash
       run: |
         VERSIONS="${{ env.new_version }}"
@@ -82,7 +91,7 @@ runs:
 
     - name: Build (no push)
       uses: docker/build-push-action@v5
-      if: ${{ !steps.release_please.outputs.releases_created }}
+      if: ${{ !steps.release_please.outputs.release_created }}
       with:
         context: ${{ inputs.local-path }}
         platforms: ${{ inputs.platforms }}
@@ -90,15 +99,16 @@ runs:
         file: ${{ inputs.local-path }}/${{ inputs.dockerfile }}
 
     - name: Build and push
-      if: ${{ !steps.release_please.outputs.releases_created }}
+      if: ${{ steps.release_please.outputs.release_created }}
       shell: bash
       run: |
         echo "Building and pushing image"
+        echo "TAGS: ${{ env.TAGS }}"
         echo "PUSH: true"
 
     # - name: Build and push
     #   uses: docker/build-push-action@v5
-    #   if: ${{ steps.release_please.outputs.releases_created }}
+    #   if: ${{ steps.release_please.outputs.release_created }}
     #   with:
     #     context: ${{ inputs.local-path }}
     #     build-args: |
@@ -112,7 +122,7 @@ runs:
     #     file: ${{ inputs.local-path }}/${{ inputs.dockerfile }}
 
     # - name: Sysdig secure scan
-    #   if: ${{ inputs.sysdig-api-token != '' && steps.release_please.outputs.releases_created }}
+    #   if: ${{ inputs.sysdig-api-token != '' && steps.release_please.outputs.release_created }}
     #   uses: sysdiglabs/scan-action@v5
     #   with:
     #     image-tag: ${{ inputs.acr-host }}/${{ inputs.image-path }}:${{ github.sha }}
