@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.1.0](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.0.0...medical/cim11-v1.1.0) (2025-09-09)
+
+
+### Features
+
+* another commit on cim11 ([029a54f](https://github.com/mathisDlmr/fff/commit/029a54ff388e5223c3e2e9ee6ba5962aa7ba13f5))
+
+
+### Bug Fixes
+
+* must trigger ci on every push on main ([765ef17](https://github.com/mathisDlmr/fff/commit/765ef17fadd1fb6a9e68dbebccf8a89e4e49659e))
+
+
+### Miscellaneous
+
+* **main:** release padoa-tools/cve-alerter 1.0.0 ([07b6f6b](https://github.com/mathisDlmr/fff/commit/07b6f6bf6b794bbaefe258265958b423cbdd6637))
+* **main:** release padoa-tools/github-runner-ci-migrate 1.0.0 ([7c7de7c](https://github.com/mathisDlmr/fff/commit/7c7de7cb2e23caf003a4be8c631b68ca0b198b6c))
+
 ## 1.0.0 (2025-09-09)
 
 
