@@ -3,6 +3,8 @@ name: Build CIM11
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
       - 'images/cim11/**'
       - '.github/workflows/cim11.yaml'

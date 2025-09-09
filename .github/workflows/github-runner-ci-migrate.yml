@@ -3,6 +3,8 @@ name: Build GitHub Runner CI Migrate
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
       - 'images/github-runner-ci-migrate/**'
       - '.github/workflows/github-runner-ci-migrate.yml'
