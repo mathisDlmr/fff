@@ -47,6 +47,8 @@ runs:
     - name: Fix release-please release and tagging
       if: ${{ steps.release_please.outputs.release_created }}
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
       run: |
         gh release edit ${{ steps.release_please.outputs.tag_name }} --title ${{ env.new_tag }}
 
