@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.1.0...medical/cim11-v1.1.1) (2025-09-09)
+
+
+### Bug Fixes
+
+* must trigger ci on every pr ([4c6b988](https://github.com/mathisDlmr/fff/commit/4c6b988510b51150ce03abaf98fa182e29850301))
+
 ## [1.1.0](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.0.0...medical/cim11-v1.1.0) (2025-09-09)
 
 
