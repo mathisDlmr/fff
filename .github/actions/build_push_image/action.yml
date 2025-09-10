@@ -28,7 +28,6 @@ runs:
     - name: Run release-please
       id: release_please
       uses: googleapis/release-please-action@v4
-      if: ${{ github.ref == 'refs/heads/main' }}
       with:
         config-file: ${{ inputs.local-path }}/.release-please-config.json
         manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
