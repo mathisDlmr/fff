@@ -25,6 +25,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      id: buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: ${{ inputs.platforms }}
+
     - name: Run release-please
       id: release_please
       uses: googleapis/release-please-action@v4
@@ -32,6 +41,15 @@ runs:
         config-file: ${{ inputs.local-path }}/.release-please-config.json
         manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
         token: ${{ inputs.github-token }}
+
+    - name: Build (no push)
+      uses: docker/build-push-action@v5
+      if: ${{ !steps.release_please.outputs.release_created }}
+      with:
+        context: ${{ inputs.local-path }}
+        platforms: ${{ inputs.platforms }}
+        push: false
+        file: ${{ inputs.local-path }}/${{ inputs.dockerfile }}
 
     - name: Get release information once release-please PR is merged
       id: get_release
@@ -51,29 +69,6 @@ runs:
       run: |
         gh release edit ${{ steps.release_please.outputs.tag_name }} --title ${{ env.new_tag }}
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-
-    - name: Set up Docker Buildx
-      id: buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        platforms: ${{ inputs.platforms }}
-
-    - name: Login to ACR
-      shell: bash
-      if: ${{ steps.release_please.outputs.release_created }}
-      run: |
-        echo "Logging in to ACR"
-
-    # - name: Login to ACR
-    #   uses: azure/docker-login@v2
-    #   if: ${{ steps.release_please.outputs.release_created }}
-    #   with:
-    #     login-server: ${{ inputs.acr-host }}
-    #     username: ${{ inputs.acr-push-user }}
-    #     password: ${{ inputs.acr-push-password }}
-
     - name: "compute tags"
       if: ${{ steps.release_please.outputs.release_created }}
       shell: bash
@@ -88,14 +83,19 @@ runs:
         fi
         echo TAGS="$TAGS" >> $GITHUB_ENV
 
-    - name: Build (no push)
-      uses: docker/build-push-action@v5
-      if: ${{ !steps.release_please.outputs.release_created }}
-      with:
-        context: ${{ inputs.local-path }}
-        platforms: ${{ inputs.platforms }}
-        push: false
-        file: ${{ inputs.local-path }}/${{ inputs.dockerfile }}
+    - name: Login to ACR
+      shell: bash
+      if: ${{ steps.release_please.outputs.release_created }}
+      run: |
+        echo "Logging in to ACR"
+
+    # - name: Login to ACR
+    #   uses: azure/docker-login@v2
+    #   if: ${{ steps.release_please.outputs.release_created }}
+    #   with:
+    #     login-server: ${{ inputs.acr-host }}
+    #     username: ${{ inputs.acr-push-user }}
+    #     password: ${{ inputs.acr-push-password }}
 
     - name: Build and push
       if: ${{ steps.release_please.outputs.release_created }}
