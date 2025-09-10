@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.2](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.1.1...medical/cim11-v1.1.2) (2025-09-10)
+
+
+### Bug Fixes
+
+* github token in env for gh release ([217c424](https://github.com/mathisDlmr/fff/commit/217c424f68a172cc2ad4168aee41d43b3683dfa3))
+
+
+### Miscellaneous
+
+* **main:** release padoa-tools/github-runner-ci-migrate 1.1.0 ([d4b24e2](https://github.com/mathisDlmr/fff/commit/d4b24e23bea602b715e810874168ea25e43d4052))
+
 ## [1.1.1](https://github.com/mathisDlmr/fff/compare/medical/cim11-v1.1.0...medical/cim11-v1.1.1) (2025-09-09)
 
 
