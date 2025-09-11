@@ -28,15 +28,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-
-    - name: Set up Docker Buildx
-      id: buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        platforms: ${{ inputs.platforms }}
-
     - name: Run release-please
       id: release_please
       uses: googleapis/release-please-action@v4
@@ -47,6 +38,7 @@ runs:
 
     - name: Get release information once release-please PR is merged
       id: get_release
+      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
       shell: bash
       run: |       
         NEW_VERSION="${{ steps.release_please.outputs.version }}"
@@ -75,6 +67,7 @@ runs:
         gh release edit ${{ steps.release_please.outputs.tag_name }} --title "${{ env.new_tag }}" 
 
     - name: "compute tags"
+      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
       shell: bash
       run: |
         TAGS="${{ inputs.acr-host }}/${{ env.image_name }}:${{ github.sha }}"        
@@ -86,13 +79,26 @@ runs:
         fi
         echo TAGS="$TAGS" >> $GITHUB_ENV
 
+    - name: Set up QEMU
+      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      id: buildx
+      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: ${{ inputs.platforms }}
+
     - name: Simulate build and push
+      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
       shell: bash
       run: |
         echo "L'image a été publiée sous le nom ${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
         echo "Les tags sont : ${{ env.TAGS }}"
     
     - name: Give Image name
+      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
       shell: bash
       run: |
         echo "L'image a été publiée sous le nom ${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
