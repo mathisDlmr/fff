@@ -64,7 +64,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
       run: |
-        gh release edit ${{ steps.release_please.outputs.tag_name }} --title "${{ env.new_tag }}" 
+        gh release edit ${{ steps.release_please.outputs[format('{0}--tag_name', inputs.local-path)] }} --title "${{ env.new_tag }}" 
 
     - name: "compute tags"
       if: ${{ steps.release_please.outputs[format('{0}--release_created', inputs.local-path)] || github.ref_name != 'main' }}
