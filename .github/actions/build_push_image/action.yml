@@ -38,10 +38,10 @@ runs:
 
     - name: Get release information once release-please PR is merged
       id: get_release
-      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
+      if: ${{ steps.release_please.outputs[${{ inputs.local-path }}--release_created] || github.ref_name != 'main' }}
       shell: bash
       run: |       
-        NEW_VERSION="${{ steps.release_please.outputs.version }}"
+        NEW_VERSION="${{ steps.release_please.outputs[${{ inputs.local-path }}--version] }}"{{ steps.release_please.outputs[${{ inputs.local-path }}--version] }}
         BASE_TAG="${{ inputs.base-tag }}"                                # Les tags des images officielles utilisées
         
         if [ ${{github.ref_name}} != "main" ]; then
@@ -59,7 +59,7 @@ runs:
         echo "clean_branch_name=$CLEAN_BRANCH_NAME" >> $GITHUB_ENV
 
     - name: Fix release-please release and tagging
-      if: ${{ steps.release_please.outputs.release_created }}
+      if: ${{ steps.release_please.outputs[${{ inputs.local-path }}--release_created] }}
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
@@ -67,7 +67,7 @@ runs:
         gh release edit ${{ steps.release_please.outputs.tag_name }} --title "${{ env.new_tag }}" 
 
     - name: "compute tags"
-      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
+      if: ${{ steps.release_please.outputs[${{ inputs.local-path }}--release_created] || github.ref_name != 'main' }}
       shell: bash
       run: |
         TAGS="${{ inputs.acr-host }}/${{ env.image_name }}:${{ github.sha }}"        
@@ -80,25 +80,25 @@ runs:
         echo TAGS="$TAGS" >> $GITHUB_ENV
 
     - name: Set up QEMU
-      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
+      if: ${{ steps.release_please.outputs[${{ inputs.local-path }}--release_created] || github.ref_name != 'main' }}
       uses: docker/setup-qemu-action@v3
 
     - name: Set up Docker Buildx
       id: buildx
-      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
+      if: ${{ steps.release_please.outputs[${{ inputs.local-path }}--release_created] || github.ref_name != 'main' }}
       uses: docker/setup-buildx-action@v3
       with:
         platforms: ${{ inputs.platforms }}
 
     - name: Simulate build and push
-      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
+      if: ${{ steps.release_please.outputs[${{ inputs.local-path }}--release_created] || github.ref_name != 'main' }}
       shell: bash
       run: |
         echo "L'image a été publiée sous le nom ${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
         echo "Les tags sont : ${{ env.TAGS }}"
     
     - name: Give Image name
-      if: ${{ steps.release_please.outputs.release_created || github.ref_name != 'main' }}
+      if: ${{ steps.release_please.outputs[${{ inputs.local-path }}--release_created] || github.ref_name != 'main' }}
       shell: bash
       run: |
         echo "L'image a été publiée sous le nom ${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
