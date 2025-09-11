@@ -21,6 +21,9 @@ inputs:
   github-token:
     description: "GitHub token for release"
     required: true
+  base-tag:
+    description: "Base version tag used to namespace image (ex: v2.10)"
+    required: false
 
 runs:
   using: "composite"
@@ -42,24 +45,26 @@ runs:
         manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
         token: ${{ inputs.github-token }}
 
-    - name: Build (no push)
-      uses: docker/build-push-action@v5
-      if: ${{ !steps.release_please.outputs.release_created }}
-      with:
-        context: ${{ inputs.local-path }}
-        platforms: ${{ inputs.platforms }}
-        push: false
-        file: ${{ inputs.local-path }}/${{ inputs.dockerfile }}
-
     - name: Get release information once release-please PR is merged
       id: get_release
-      if: ${{ steps.release_please.outputs.release_created }}
       shell: bash
       run: |       
         NEW_VERSION="${{ steps.release_please.outputs.version }}"
-        NEW_TAG="${{ inputs.image-path }}:v$NEW_VERSION"
+        BASE_TAG="${{ inputs.base-tag }}"                                # Les tags des images officielles utilisées
+        
+        if [ ${{github.ref_name}} != "main" ]; then
+          CLEAN_BRANCH_NAME=$(echo ${{github.ref_name}} | sed 's/[^a-zA-Z0-9._-]/-/g' | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="${{ inputs.image-path }}${BASE_TAG:+-$BASE_TAG}-$CLEAN_BRANCH_NAME"
+        else
+          IMAGE_NAME="${{ inputs.image-path }}${BASE_TAG:+-$BASE_TAG}"
+        fi
+        NEW_TAG="${IMAGE_NAME}:v${NEW_VERSION}"                          # Tag final (nom + images officielles + version Padoa)
+
         echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
+        echo "image_name=$IMAGE_NAME" >> $GITHUB_ENV
         echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
+        echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
+        echo "clean_branch_name=$CLEAN_BRANCH_NAME" >> $GITHUB_ENV
 
     - name: Fix release-please release and tagging
       if: ${{ steps.release_please.outputs.release_created }}
@@ -67,69 +72,27 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
       run: |
-        gh release edit ${{ steps.release_please.outputs.tag_name }} --title ${{ env.new_tag }}
+        gh release edit ${{ steps.release_please.outputs.tag_name }} --title "${{ env.new_tag }}" 
 
     - name: "compute tags"
-      if: ${{ steps.release_please.outputs.release_created }}
       shell: bash
       run: |
-        VERSIONS="${{ env.new_version }}"
-        TAGS="${{ inputs.acr-host }}/${{ inputs.image-path }}:${{ github.sha }}"
-        for VERSION in ${VERSIONS//,/ } ; do 
-          TAGS="$TAGS,${{ inputs.acr-host }}/${{ inputs.image-path }}:$VERSION"
-        done
-        if [ "${{ inputs.should-tag-latest }}" = "true" ]; then 
-          TAGS="$TAGS,${{ inputs.acr-host }}/${{ inputs.image-path }}:latest"
+        TAGS="${{ inputs.acr-host }}/${{ env.image_name }}:${{ github.sha }}"        
+        if [ -n "${{ env.new_version }}" ]; then
+          TAGS="$TAGS,${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
+        fi
+        if [ "${{ inputs.should-tag-latest }}" = "true" ] && [ "${{ env.branch_name }}" = "main" ]; then 
+          TAGS="$TAGS,${{ inputs.acr-host }}/${{ env.image_name }}:latest"
         fi
         echo TAGS="$TAGS" >> $GITHUB_ENV
 
-    - name: Login to ACR
-      shell: bash
-      if: ${{ steps.release_please.outputs.release_created }}
-      run: |
-        echo "Logging in to ACR"
-
-    # - name: Login to ACR
-    #   uses: azure/docker-login@v2
-    #   if: ${{ steps.release_please.outputs.release_created }}
-    #   with:
-    #     login-server: ${{ inputs.acr-host }}
-    #     username: ${{ inputs.acr-push-user }}
-    #     password: ${{ inputs.acr-push-password }}
-
-    - name: Build and push
-      if: ${{ steps.release_please.outputs.release_created }}
+    - name: Simulate build and push
       shell: bash
       run: |
-        echo "Building and pushing image"
-        echo "TAGS: ${{ env.TAGS }}"
-        echo "PUSH: true"
-
-    # - name: Build and push
-    #   uses: docker/build-push-action@v5
-    #   if: ${{ steps.release_please.outputs.release_created }}
-    #   with:
-    #     context: ${{ inputs.local-path }}
-    #     build-args: |
-    #       AZDO_NPM_REGISTRY_PULL_TOKEN="${{ inputs.azdo-pull-token }}"
-    #       PG_VERSION=${{ inputs.pg-version }}
-    #       NODE_VERSION=${{ inputs.node-version }}
-    #       ES_VERSION=${{ inputs.es-version }}
-    #     platforms: ${{ inputs.platforms }}
-    #     push: true
-    #     tags: ${{ env.TAGS }}
-    #     file: ${{ inputs.local-path }}/${{ inputs.dockerfile }}
-
-    # - name: Sysdig secure scan
-    #   if: ${{ inputs.sysdig-api-token != '' && steps.release_please.outputs.release_created }}
-    #   uses: sysdiglabs/scan-action@v5
-    #   with:
-    #     image-tag: ${{ inputs.acr-host }}/${{ inputs.image-path }}:${{ github.sha }}
-    #     # API token for Sysdig Scanning auth
-    #     sysdig-secure-token: ${{ inputs.sysdig-api-token }}
-    #     sysdig-secure-url: "https://eu1.app.sysdig.com"
-    #     registry-user: ${{ inputs.acr-push-user }}
-    #     registry-password: ${{ inputs.acr-push-password }}
-    #     # dockerfile-path: ${{ inputs.local-path }}
-    #     # input-type: docker-daemon
-    #     ignore-failed-scan: true
+        echo "L'image a été publiée sous le nom ${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
+        echo "Les tags sont : ${{ env.TAGS }}"
+    
+    - name: Give Image name
+      shell: bash
+      run: |
+        echo "L'image a été publiée sous le nom ${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
