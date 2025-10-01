@@ -26,7 +26,7 @@ on:
 
 jobs:
   get-github-email:
-    runs-on: micro-runner
+    runs-on: ubuntu-22.04
     outputs:
       github-email: ${{ steps.get-email.outputs.email }}
     steps:
@@ -41,7 +41,7 @@ jobs:
           echo "email=$email" >> $GITHUB_OUTPUT
 
   echo-github-email:
-    runs-on: micro-runner
+    runs-on: ubuntu-22.04
     steps:
       - name: Echo GitHub Email
         run: |
