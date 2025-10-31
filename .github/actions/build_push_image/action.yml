@@ -74,8 +74,8 @@ runs:
       id: release_please
       uses: googleapis/release-please-action@v4
       with:
-        config-file: ../../.release-please-config.json
-        manifest-file: ../../.release-please-manifest.json
+        config-file: .release-please-config.json
+        manifest-file: .release-please-manifest.json
         token: ${{ inputs.github-token }}
 
     - name: Shoud build/push image to ACR ? # Because we build/push image when a release is created, or on branch with pre-release
