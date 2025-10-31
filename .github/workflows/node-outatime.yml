@@ -1,0 +1,75 @@
+name: Build Node Outatime
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'padoa-tools/outatime-node/**'
+      - '.github/workflows/node-outatime.yml'
+  push:
+    paths:
+      - 'padoa-tools/outatime-node/**'
+      - '.github/workflows/node-outatime.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: padoa-tools/outatime-node
+    runs-on: ubuntu-latest
+    env:
+      VERSIONS_LIST: nodev24.10 nodev24.6 nodev20.19 nodev20.16 nodev20.8 nodev18.18 nodev18.15 nodev16.20
+    strategy:
+      max-parallel: 1
+      matrix:
+        versions: [
+          { version: "24.6.0", baseTag: "nodev24.6" },
+          { version: "24.10.0", baseTag: "nodev24.10" },
+          { version: "20.19.4", baseTag: "nodev20.19" },
+          { version: "20.19.0", baseTag: "nodev20.19" },
+          { version: "20.16.0", baseTag: "nodev20.16" },
+          { version: "20.8.0", baseTag: "nodev20.8" },
+          { version: "18.18.0", baseTag: "nodev18.18" },
+          { version: "18.15.0", baseTag: "nodev18.15" },
+          { version: "16.20.0", baseTag: "nodev16.20" }
+        ]
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v3.5.0
+        with:
+          ssh-key: ${{ secrets.SSH_KEY_SUBMODULES }}
+          submodules: recursive
+      - name: build and push
+        id: build
+        uses: ./.github/actions/build_push_image
+        with:
+          platforms: linux/amd64,linux/arm64/v8
+          acr-host: ${{ secrets.ACR_HOST }}
+          acr-push-user: ${{ secrets.ACR_PUSH_USER }}
+          acr-push-password: ${{ secrets.ACR_PUSH_PASSWORD }}
+          azdo-pull-token: ${{ secrets.AZDO_NPM_REGISTRY_PULL_TOKEN }}
+          node-version: ${{ matrix.versions.version }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-tag: ${{ matrix.versions.baseTag }}
+      - name: Update release with all image versions
+        if: steps.build.outputs.release-created == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_TAG="${{ steps.build.outputs.release-tag }}"
+          VERSION="${{ steps.build.outputs.version }}"
+          CURRENT_BODY=$(gh release view "$RELEASE_TAG" --json body -q .body)
+          
+          IMAGE_LIST=""
+          for baseTag in ${{ env.VERSIONS_LIST }}; do
+            IMAGE_LIST="${IMAGE_LIST}* \`padoa-tools/outatime-node-${baseTag}:v${VERSION}\`"$'\n'
+          done
+          
+          printf -v NEW_BODY "## Image également disponible sous les versions\n\n%s\n---\n\n%s" "$IMAGE_LIST" "$CURRENT_BODY"
+ 
+          gh release edit "$RELEASE_TAG" --notes "$NEW_BODY"

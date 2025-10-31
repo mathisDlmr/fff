@@ -1,0 +1,65 @@
+name: Build Cypress
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'padoa-tools/cypress/**'
+      - '.github/workflows/cypress.yaml'
+  push:
+    paths:
+      - 'padoa-tools/cypress/**'
+      - '.github/workflows/cypress.yaml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: padoa-tools/cypress
+    runs-on: ubuntu-latest
+    env:
+      VERSIONS_LIST: cypressv20.16 cypressv18.20 cypressv18.15
+    strategy:
+      max-parallel: 1
+      matrix:
+        versions: [
+          { version: "20.16.0", baseTag: "cypressv20.16" },
+          { version: "18.20.3", baseTag: "cypressv18.20" },
+          { version: "18.15.0", baseTag: "cypressv18.15" }
+        ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+      - name: build and push
+        id: build
+        uses: ./.github/actions/build_push_image
+        with:
+          acr-host: ${{ secrets.ACR_HOST }}
+          acr-push-user: ${{ secrets.ACR_PUSH_USER }}
+          acr-push-password: ${{ secrets.ACR_PUSH_PASSWORD }}
+          azdo-pull-token: ${{ secrets.AZDO_NPM_REGISTRY_PULL_TOKEN }}
+          node-version: ${{ matrix.versions.version }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-tag: ${{ matrix.versions.baseTag }}
+      - name: Update release with all image versions
+        if: steps.build.outputs.release-created == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_TAG="${{ steps.build.outputs.release-tag }}"
+          VERSION="${{ steps.build.outputs.version }}"
+          CURRENT_BODY=$(gh release view "$RELEASE_TAG" --json body -q .body)
+          
+          IMAGE_LIST=""
+          for baseTag in ${{ env.VERSIONS_LIST }}; do
+            IMAGE_LIST="${IMAGE_LIST}* \`padoa-tools/cypress-${baseTag}:v${VERSION}\`"$'\n'
+          done
+          
+          printf -v NEW_BODY "## Image également disponible sous les versions\n\n%s\n---\n\n%s" "$IMAGE_LIST" "$CURRENT_BODY"
+          
+          gh release edit "$RELEASE_TAG" --notes "$NEW_BODY"

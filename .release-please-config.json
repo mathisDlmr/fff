@@ -1,0 +1,245 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "include-v-in-tag": true,
+  "skip-labeling": true,
+  "packages": {
+    "padoa-tools/postgres-outatime": {
+      "package-name": "padoa-tools/postgres-outatime",
+      "release-type": "simple"
+    },
+    "padoa-tools/infra-utils": {
+      "package-name": "padoa-tools/infra-utils",
+      "release-type": "simple"
+    },
+    "padoa-tools/pgbouncer-exporter": {
+      "package-name": "padoa-tools/pgbouncer-exporter",
+      "release-type": "simple"
+    },
+    "padoa-tools/pgo-analyze": {
+      "package-name": "padoa-tools/pgo-analyze",
+      "release-type": "simple"
+    },
+    "padoa-tools/fake-blob-storage": {
+      "package-name": "padoa-tools/fake-blob-storage",
+      "release-type": "simple"
+    },
+    "padoa-tools/padoa-opensearch-dashboards": {
+      "package-name": "padoa-tools/padoa-opensearch-dashboards",
+      "release-type": "simple"
+    },
+    "padoa-tools/azure-disks-exporter": {
+      "package-name": "padoa-tools/azure-disks-exporter",
+      "release-type": "simple"
+    },
+    "padoa-tools/padoa-filebeat": {
+      "package-name": "padoa-tools/padoa-filebeat",
+      "release-type": "simple"
+    },
+    "padoa-tools/logs-restorer": {
+      "package-name": "padoa-tools/logs-restorer",
+      "release-type": "simple"
+    },
+    "padoa-tools/postgis": {
+      "package-name": "padoa-tools/postgis",
+      "release-type": "simple"
+    },
+    "padoa-tools/pgo-process-exporter": {
+      "package-name": "padoa-tools/pgo-process-exporter",
+      "release-type": "simple"
+    },
+    "padoa-tools/elasticsearch": {
+      "package-name": "padoa-tools/elasticsearch",
+      "release-type": "simple"
+    },
+    "padoa-tools/padoa-pritunl-server": {
+      "package-name": "padoa-tools/padoa-pritunl-server",
+      "release-type": "simple"
+    },
+    "padoa-tools/padoa-argocd": {
+      "package-name": "padoa-tools/padoa-argocd",
+      "release-type": "simple"
+    },
+    "padoa-tools/key-rotation": {
+      "package-name": "padoa-tools/key-rotation",
+      "release-type": "simple"
+    },
+    "padoa-tools/padoa-opensearch": {
+      "package-name": "padoa-tools/padoa-opensearch",
+      "release-type": "simple"
+    },
+    "padoa-tools/orb-sre/helm": {
+      "package-name": "padoa-tools/orb-sre/helm",
+      "release-type": "simple"
+    },
+    "padoa-tools/orb-sre/terraform": {
+      "package-name": "padoa-tools/orb-sre/terraform",
+      "release-type": "simple"
+    },
+    "padoa-tools/padoa-nettools": {
+      "package-name": "padoa-tools/padoa-nettools",
+      "release-type": "simple"
+    },
+    "padoa-tools/postgres-ci-utils": {
+      "package-name": "padoa-tools/postgres-ci-utils",
+      "release-type": "simple"
+    },
+    "padoa-tools/fluentbit-lua": {
+      "package-name": "padoa-tools/fluentbit-lua",
+      "release-type": "simple"
+    },
+    "padoa-tools/submit-workflow": {
+      "package-name": "padoa-tools/submit-workflow",
+      "release-type": "simple"
+    },
+    "padoa-tools/ci-migrate": {
+      "package-name": "padoa-tools/ci-migrate",
+      "release-type": "simple"
+    },
+    "padoa-tools/github-runner-ci-migrate": {
+      "package-name": "padoa-tools/github-runner-ci-migrate",
+      "release-type": "simple"
+    },
+    "padoa-tools/dlp-google-workspace": {
+      "package-name": "padoa-tools/dlp-google-workspace",
+      "release-type": "simple"
+    },
+    "padoa-tools/pgo-filebeat": {
+      "package-name": "padoa-tools/pgo-filebeat",
+      "release-type": "simple"
+    },
+    "padoa-tools/tollerator": {
+      "package-name": "padoa-tools/tollerator",
+      "release-type": "simple"
+    },
+    "padoa-tools/gen-badger": {
+      "package-name": "padoa-tools/gen-badger",
+      "release-type": "simple"
+    },
+    "padoa-tools/kubecost-exporter": {
+      "package-name": "padoa-tools/kubecost-exporter",
+      "release-type": "simple"
+    },
+    "padoa-tools/azure-expired-tokens": {
+      "package-name": "padoa-tools/azure-expired-tokens",
+      "release-type": "simple"
+    },
+    "padoa-tools/e2e-ci-utils": {
+      "package-name": "padoa-tools/e2e-ci-utils",
+      "release-type": "simple"
+    },
+    "padoa-tools/e2e-tests-utils": {
+      "package-name": "padoa-tools/e2e-tests-utils",
+      "release-type": "simple"
+    },
+    "padoa-tools/e2e-utils": {
+      "package-name": "padoa-tools/e2e-utils",
+      "release-type": "simple"
+    },
+    "padoa-tools/outatime-node": {
+      "package-name": "padoa-tools/outatime-node",
+      "release-type": "simple"
+    },
+    "padoa-tools/busybox": {
+      "package-name": "padoa-tools/busybox",
+      "release-type": "simple"
+    },
+    "padoa-tools/padoa-azure-db-log-collector": {
+      "package-name": "padoa-tools/padoa-azure-db-log-collector",
+      "release-type": "simple"
+    },
+    "padoa-tools/pgo-wal-cleaner": {
+      "package-name": "padoa-tools/pgo-wal-cleaner",
+      "release-type": "simple"
+    },
+    "padoa-tools/github-runners-padoa": {
+      "package-name": "padoa-tools/github-runners-padoa",
+      "release-type": "simple"
+    },
+    "padoa-tools/detect-orphaned-applications": {
+      "package-name": "padoa-tools/detect-orphaned-applications",
+      "release-type": "simple"
+    },
+    "padoa-tools/argocd-tools": {
+      "package-name": "padoa-tools/argocd-tools",
+      "release-type": "simple"
+    },
+    "padoa-tools/stuck-pod-killer": {
+      "package-name": "padoa-tools/stuck-pod-killer",
+      "release-type": "simple"
+    },
+    "padoa-tools/pg-benchmark": {
+      "package-name": "padoa-tools/pg-benchmark",
+      "release-type": "simple"
+    },
+    "padoa-tools/padoa-fluentd": {
+      "package-name": "padoa-tools/padoa-fluentd",
+      "release-type": "simple"
+    },
+    "padoa-tools/cypress": {
+      "package-name": "padoa-tools/cypress",
+      "release-type": "simple"
+    },
+    "padoa-tools/cve-alerter": {
+      "package-name": "padoa-tools/cve-alerter",
+      "release-type": "simple"
+    },
+    "padoa-tools/outatime-node-with-az-cli": {
+      "package-name": "padoa-tools/outatime-node-with-az-cli",
+      "release-type": "simple"
+    },
+    "padoa-tools/pgbackrest": {
+      "package-name": "padoa-tools/pgbackrest",
+      "release-type": "simple"
+    },
+    "padoa-tools/pgo-log-cleaner": {
+      "package-name": "padoa-tools/pgo-log-cleaner",
+      "release-type": "simple"
+    },
+    "padoa-tools/vault-expiration-monitor": {
+      "package-name": "padoa-tools/vault-expiration-monitor",
+      "release-type": "simple"
+    },
+    "padoa-tools/es-snapshot-manager": {
+      "package-name": "padoa-tools/es-snapshot-manager",
+      "release-type": "simple"
+    },
+    "padoa-tools/postgres": {
+      "package-name": "padoa-tools/postgres",
+      "release-type": "simple"
+    },
+    "padoa-tools/cheap-replicator-utils": {
+      "package-name": "padoa-tools/cheap-replicator-utils",
+      "release-type": "simple"
+    },
+    "padoa-tools/elasticsearch-faketime": {
+      "package-name": "padoa-tools/elasticsearch-faketime",
+      "release-type": "simple"
+    },
+    "medical/cim11": {
+      "package-name": "medical/cim11",
+      "release-type": "simple"
+    },
+    "medical/cim11-dev": {
+      "package-name": "medical/cim11-dev",
+      "release-type": "simple"
+    },
+    "padoa/terraform-operator-runner": {
+      "package-name": "padoa/terraform-operator-runner",
+      "release-type": "simple"
+    }
+  },
+  "changelog-sections": [
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "chore",
+      "section": "Miscellaneous"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+name: Build Argocd
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'padoa-tools/padoa-argocd/**'
+      - '.github/workflows/padoa-argocd.yml'
+  push:
+    paths:
+      - 'padoa-tools/padoa-argocd/**'
+      - '.github/workflows/padoa-argocdyml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: padoa-tools/padoa-argocd
+    runs-on: ubuntu-latest
+    env:
+      VERSIONS_LIST: argocdv2.10-3 argocdv2.11
+    strategy:
+      max-parallel: 1
+      matrix:
+        versions: [
+          { version: "v2.10.11", baseTag: "argocdv2.10-3" },
+          { version: "v2.11.2", baseTag: "argocdv2.11" }
+        ]
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v3.5.0
+        with:
+          ssh-key: ${{ secrets.SSH_KEY_SUBMODULES }}
+          submodules: recursive
+      - name: Clone and add config
+        # TODO: remove debug-log when not needed, only for debug
+        run: >
+          git clone https://github.com/argoproj/argo-cd.git custom-argocd;
+          cd custom-argocd;
+          git checkout ${{ matrix.versions.version }};
+          git apply < ../parent-application-link.patch;
+          git apply < ../helm-and-helm-sops.patch;
+          cd ../;
+          mv custom-argocd/* .;
+          rm -rf custom-argocd;
+      - name: build and push
+        id: build
+        uses: ./.github/actions/build_push_image
+        with:
+          platforms: linux/amd64,linux/arm64
+          acr-host: ${{ secrets.ACR_HOST }}
+          acr-push-user: ${{ secrets.ACR_PUSH_USER }}
+          acr-push-password: ${{ secrets.ACR_PUSH_PASSWORD }}
+          azdo-pull-token: ${{ secrets.AZDO_NPM_REGISTRY_PULL_TOKEN }}
+          pg-version: ${{ matrix.versions.version }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-tag: ${{ matrix.versions.baseTag }}
+      - name: Update release with all image versions
+        if: steps.build.outputs.release-created == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_TAG="${{ steps.build.outputs.release-tag }}"
+          VERSION="${{ steps.build.outputs.version }}"
+          CURRENT_BODY=$(gh release view "$RELEASE_TAG" --json body -q .body)
+          
+          IMAGE_LIST=""
+          for baseTag in ${{ env.VERSIONS_LIST }}; do
+            IMAGE_LIST="${IMAGE_LIST}* \`padoa-tools/padoa-argocd-${baseTag}:v${VERSION}\`"$'\n'
+          done
+          
+          printf -v NEW_BODY "## Image également disponible sous les versions\n\n%s\n---\n\n%s" "$IMAGE_LIST" "$CURRENT_BODY"
+          
+          gh release edit "$RELEASE_TAG" --notes "$NEW_BODY"

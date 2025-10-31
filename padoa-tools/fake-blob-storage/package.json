@@ -1,0 +1,22 @@
+{
+  "name": "fake-blob-storage",
+  "version": "0.0.1",
+  "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": "20.16.0"
+  },
+  "scripts": {
+    "start": "(sleep 5 ;node setup.js) & yarn --ignore-engines run azurite-blob --blobHost ${BLOB_ENDPOINT:-0.0.0.0} --blobPort ${BLOB_PORT:-10000} --location ./data --loose",
+    "start:https": "(sleep 5 ;IS_HTTPS=true node setup.js) & yarn --ignore-engines run azurite-blob --blobHost ${BLOB_ENDPOINT:-0.0.0.0} --blobPort ${BLOB_PORT:-10000} --location ./data --cert /src/cert.pem --key /src/cert-key.pem --oauth basic --loose",
+    "setup": "node setup.js",
+    "yarn": "yarn install --frozen-lockfile --network-timeout 1000000"
+  },
+  "dependencies": {
+    "@azure/core-http-compat": "^2.2.0",
+    "@azure/identity": "^4.2.0",
+    "@azure/storage-blob": "^12.27.0",
+    "azurite": "^3.35.0"
+  },
+  "packageManager": "yarn@1.22.19+sha512.ff4579ab459bb25aa7c0ff75b62acebe576f6084b36aa842971cf250a5d8c6cd3bc9420b22ce63c7f93a0857bc6ef29291db39c3e7a23aab5adfd5a4dd6c5d71"
+}

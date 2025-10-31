@@ -1,0 +1,43 @@
+name: Build fluentbit-lua
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'padoa-tools/fluentbit-lua/**'
+      - '.github/workflows/fluentbit-lua.yaml'
+  push:
+    paths:
+      - "padoa-tools/fluentbit-lua/**"
+      - ".github/workflows/fluentbit-lua.yaml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: padoa-tools/fluentbit-lua
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        versions: [{ version: "3.2.8" }]
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v3.5.0
+        with:
+          ssh-key: ${{ secrets.SSH_KEY_SUBMODULES }}
+          submodules: recursive
+      - name: build and push
+        uses: ./.github/actions/build_push_image
+        with:
+          platforms: linux/amd64
+          acr-host: ${{ secrets.ACR_HOST }}
+          acr-push-user: ${{ secrets.ACR_PUSH_USER }}
+          acr-push-password: ${{ secrets.ACR_PUSH_PASSWORD }}
+          azdo-pull-token: ${{ secrets.AZDO_NPM_REGISTRY_PULL_TOKEN }}
+          sysdig-api-token: ${{ secrets.SYSDIG_API_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

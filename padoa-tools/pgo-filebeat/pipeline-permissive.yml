@@ -1,0 +1,76 @@
+# NOTE: this file is copied from pipeline.yaml.
+# Changelog:
+# - Changed:
+#   - SEQUELIZE_COMMMENT_DATA pattern, added new metadata: JOBID, x-normalized-path, WORKERTYPE, CONSUMERGROUPNAME, EVENTTYPE, TASKNAME
+#   - WORD_COMMENT pattern to be more permissive
+description: Pipeline for parsing PostgreSQL logs.
+processors:
+  - set:
+      field: event.ingested
+      value: "{{_ingest.timestamp}}"
+  # BEGIN PADOA
+  - grok:
+      field: message
+      ignore_missing: true
+      patterns:
+        - '^%{DATETIME:postgresql.log.timestamp} (\[%{NUMBER:process.pid:long}(-%{BASE16FLOAT:postgresql.log.core_id:long})?\] (%{IP:ip}\(%{NUMBER:port}\)|\[local\])? %{APPLICATION_NAME:application_name} ((\[%{USERNAME:user.name}\]@\[%{POSTGRESQL_DB_NAME:postgresql.log.database}\]|%{USERNAME:user.name}@%{POSTGRESQL_DB_NAME:postgresql.log.database}) )?)?%{WORD:log.level}:  (?:%{NUMBER:postgresql.log.error.code:long}|%{SPACE})(duration: %{NUMBER:temp.duration:float} ms  %{POSTGRESQL_QUERY_STEP}: (%{SEQUELIZE_COMMENT}(\n| ))?\t?%{POSTGRESQL_QUERY:postgresql.log.query}|: %{GREEDYDATA:message}|%{GREEDYDATA:message})'
+      pattern_definitions:
+        DATETIME: "[-0-9]+ %{TIME} %{WORD:event.timezone}"
+        POSTGRESQL_DB_NAME: '[a-zA-Z0-9_]+[a-zA-Z0-9_\-\$]*'
+        POSTGRESQL_QUERY_STEP: "%{WORD:postgresql.log.query_step}(?: <unnamed>| %{WORD:postgresql.log.query_name})?"
+        POSTGRESQL_QUERY: '(.|\n)*'
+        APPLICATION_NAME: '\[?[^\@]*\]?'
+        SEQUELIZE_COMMENT: '/\* (%{SEQUELIZE_COMMMENT_DATA} )+ \*/'
+        WORD_COMMENT: "[[:^space:]]+"
+        SEQUELIZE_COMMMENT_DATA: "(X-Request-ID %{WORD_COMMENT:X-Request-ID})|(SCOPE %{WORD_COMMENT:scope})|(EVTRULE %{WORD_COMMENT:evtRule})|(JOBID %{WORD_COMMENT:jobId})|(x-normalized-path %{WORD_COMMENT:x-normalized-path})|(WORKERTYPE %{WORD_COMMENT:workerType})|(CONSUMERGROUPNAME %{WORD_COMMENT:consumerGroupName})|(EVENTTYPE %{WORD_COMMENT:eventType})|(TASKNAME %{WORD_COMMENT:taskName})|(X-Parent-Request-ID %{WORD_COMMENT:X-Parent-Request-ID})|(%{WORD_COMMENT} %{WORD_COMMENT})"
+  # END PADOA
+  - date:
+      field: postgresql.log.timestamp
+      target_field: "@timestamp"
+      formats:
+        - yyyy-MM-dd HH:mm:ss.SSS zz
+        - yyyy-MM-dd HH:mm:ss zz
+  - script:
+      lang: painless
+      source: ctx.event.duration = Math.round(ctx.temp.duration * params.scale)
+      params:
+        scale: 1000000
+      if: ctx.temp?.duration != null
+  - remove:
+      field: temp.duration
+      ignore_missing: true
+  - set:
+      field: event.kind
+      value: event
+  - append:
+      field: event.category
+      value:
+        - database
+  - append:
+      field: event.type
+      value:
+        - info
+      if: "ctx?.postgresql?.log?.sql_state_code == null || (ctx.postgresql.log.sql_state_code ==~ /^0[012].*/)"
+  - append:
+      field: event.type
+      value:
+        - error
+      if: "ctx?.postgresql?.log?.sql_state_code != null && ! (ctx.postgresql.log.sql_state_code ==~ /^0[012].*/)"
+  - append:
+      field: related.user
+      value: "{{user.name}}"
+      if: "ctx?.user?.name != null"
+  # BEGIN PADOA
+  - script:
+      lang: painless
+      source: >
+        String query = ctx["postgresql"]["log"]["query"];
+        query = /\([0-9]+(, [0-9]+)*\)/.matcher(query).replaceAll('SANITIZED_IDS');
+        query = /LIMIT [0-9]+/.matcher(query).replaceAll('LIMIT LIMIT_VALUE');
+        query = /IN \([^ ,]+(, [^ ,]+)*\)/.matcher(query).replaceAll('IN (SANITIZED_ARRAY)');
+        ctx["postgresql"]["log"]["sanitized_query"] = query;
+  # END PADOA
+on_failure:
+  - set:
+      field: error.message
+      value: "{{ _ingest.on_failure_message }}"

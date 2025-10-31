@@ -2,15 +2,21 @@ name: "Build and push IMAGE"
 description: "Build docker image and push it to ACR (with semver tagging via semantic-release)"
 
 inputs:
-  local-path:
-    description: "Path where the dockerfile is located"
-    required: true
   dockerfile:
     description: "Dockerfile to use"
     default: "Dockerfile"
     required: false
-  image-path:
-    description: "Path where the image will be pushed"
+  acr-host:
+    description: "ACR Host"
+    required: true
+  acr-push-user:
+    description: "ACR User"
+    required: true
+  acr-push-password:
+    description: "ACR Password"
+    required: true
+  azdo-pull-token:
+    description: "Azure Artifacts registry pull token"
     required: true
   should-tag-latest:
     description: "Boolean set to true if the latest tag should be applied to the image"
@@ -18,35 +24,84 @@ inputs:
   platforms:
     description: "architecture for the build (linux/amd64,linux/arm64,linux/arm/v7)"
     required: true
+  pg-version:
+    description: "specify pg version to build"
+    required: false
+  node-version:
+    description: "specify node version to build"
+    required: false
+  es-version:
+    description: "specify elasticsearch version to build"
+    required: false
+  sysdig-api-token:
+    description: "Sysdig API token for cli-scanner"
+    required: false
   github-token:
     description: "GitHub token for release"
     required: true
   base-tag:
     description: "Base version tag used to namespace image (ex: v2.10)"
     required: false
+  fixed-tags:
+    description: "Fixed tags to apply to the image"
+    required: false
+
+outputs:
+  release-created:
+    description: "Whether a release was created"
+    value: ${{ steps.release_please.outputs[format('{0}--release_created', steps.package_path.outputs.path)] }}
+  release-tag:
+    description: "The release tag name"
+    value: ${{ steps.release_please.outputs[format('{0}--tag_name', steps.package_path.outputs.path)] }}
+  image-tag:
+    description: "The full image tag (with base-tag and version)"
+    value: ${{ steps.get_release.outputs.image_tag }}
+  version:
+    description: "The version of the release"
+    value: ${{ steps.get_release.outputs.version }}
 
 runs:
   using: "composite"
   steps:
+    - name: Determine package path
+      id: package_path
+      shell: bash
+      run: |
+        PACKAGE_PATH=$(realpath --relative-to="${{ github.workspace }}" "$(pwd)")
+        echo "path=$PACKAGE_PATH" >> $GITHUB_OUTPUT
+    
     - name: Run release-please
       id: release_please
       uses: googleapis/release-please-action@v4
       with:
-        config-file: ${{ inputs.local-path }}/.release-please-config.json
-        manifest-file: ${{ inputs.local-path }}/.release-please-manifest.json
+        config-file: ../../.release-please-config.json
+        manifest-file: ../../.release-please-manifest.json
         token: ${{ inputs.github-token }}
 
-    - name: Get release information once release-please PR is merged
-      id: get_release
-      if: ${{ steps.release_please.outputs[format('{0}--release_created', inputs.local-path)] || github.ref_name != 'main' }}
+    - name: Shoud build/push image to ACR ? # Because we build/push image when a release is created, or on branch with pre-release
+      id: should_build_push_image
       shell: bash
-      run: |       
-        NEW_VERSION="${{ steps.release_please.outputs[format('{0}--version', inputs.local-path)] }}"
-        BASE_TAG="${{ inputs.base-tag }}"                                # Les tags des images officielles utilisées
-        IMAGE_NAME="${{ inputs.image-path }}${BASE_TAG:+-$BASE_TAG}"
-        
+      run: |
+        if [[ "${{ steps.release_please.outputs[format('{0}--release_created', steps.package_path.outputs.path)] }}" == "true" ]] \
+          || [[ "${{ github.event_name }}" == "push" && "${{ github.ref_name }}" != "main" ]] \
+          || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "result=true" >> $GITHUB_OUTPUT
+        else
+          echo "result=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Get release information once release-please PR is merged we need to compute image version from release-please
+      id: get_release
+      if: ${{ steps.should_build_push_image.outputs.result == 'true' }}
+      shell: bash
+      run: |
+        PACKAGE_PATH="${{ steps.package_path.outputs.path }}"
+        NEW_VERSION="${{ steps.release_please.outputs[format('{0}--version', steps.package_path.outputs.path)] }}"
+        BASE_TAG="${{ inputs.base-tag }}"
+        IMAGE_NAME="${PACKAGE_PATH}${BASE_TAG:+-$BASE_TAG}"
+
         if [ "${{ github.ref_name }}" != "main" ]; then
-          LAST_VERSION=$(jq -r '.["${{ inputs.local-path }}"]' ${{ inputs.local-path }}/.release-please-manifest.json)
+          LAST_VERSION=$(jq -r '."'"$PACKAGE_PATH"'"' .release-please-manifest.json)
 
           if [ "$LAST_VERSION" = "null" ] || [ -z "$LAST_VERSION" ]; then
             LAST_VERSION="1.0.0"
@@ -54,54 +109,96 @@ runs:
 
           CLEAN_BRANCH_NAME=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9._-]/-/g' | tr '[:upper:]' '[:lower:]')
           NEW_VERSION="${LAST_VERSION}-$CLEAN_BRANCH_NAME"          
+        elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.ref_name }}" == "main" ]]; then
+          LAST_VERSION=$(jq -r '."'"$PACKAGE_PATH"'"' .release-please-manifest.json)
+
+          if [ "$LAST_VERSION" = "null" ] || [ -z "$LAST_VERSION" ]; then
+            LAST_VERSION="1.0.0"
+          fi
+
+          NEW_VERSION="${LAST_VERSION}"
         fi
-        NEW_TAG="${IMAGE_NAME}:v${NEW_VERSION}"                          # Tag final (nom + images officielles + version Padoa)
+        NEW_TAG="${IMAGE_NAME}:v${NEW_VERSION}"
 
         echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
         echo "image_name=$IMAGE_NAME" >> $GITHUB_ENV
         echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
 
+        echo "image_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
     - name: Fix release-please release and tagging
-      if: ${{ steps.release_please.outputs[format('{0}--release_created', inputs.local-path)] }}
+      if: ${{ steps.release_please.outputs[format('{0}--release_created', steps.package_path.outputs.path)] }} # To edit release-please release title with the full image tag
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
       run: |
-        gh release edit ${{ steps.release_please.outputs[format('{0}--tag_name', inputs.local-path)] }} --title "${{ env.new_tag }}" 
+        gh release edit ${{ steps.release_please.outputs[format('{0}--tag_name', steps.package_path.outputs.path)] }} --title "${{ env.new_tag }}"
 
     - name: "compute tags"
-      if: ${{ steps.release_please.outputs[format('{0}--release_created', inputs.local-path)] || github.ref_name != 'main' }}
+      if: ${{ steps.should_build_push_image.outputs.result == 'true' }}
       shell: bash
       run: |
-        TAGS="${{ inputs.acr-host }}/${{ env.image_name }}:${{ github.sha }}"        
-        if [ -n "${{ env.new_version }}" ]; then
-          TAGS="$TAGS,${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
-        fi
+        TAGS="${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
         if [ "${{ inputs.should-tag-latest }}" = "true" ] && [ "${{ github.ref_name }}" = "main" ]; then 
           TAGS="$TAGS,${{ inputs.acr-host }}/${{ env.image_name }}:latest"
         fi
+        if [ -n "${{ inputs.fixed-tags }}" ]; then
+          TAGS="$TAGS,${{ inputs.fixed-tags }}"
+        fi
         echo TAGS="$TAGS" >> $GITHUB_ENV
 
+    - name: Login to ACR
+      uses: azure/docker-login@v2
+      if: ${{ steps.should_build_push_image.outputs.result == 'true' }}
+      with:
+        login-server: ${{ inputs.acr-host }}
+        username: ${{ inputs.acr-push-user }}
+        password: ${{ inputs.acr-push-password }}
+
     - name: Set up QEMU
-      if: ${{ steps.release_please.outputs[format('{0}--release_created', inputs.local-path)] || github.ref_name != 'main' }}
+      if: ${{ steps.should_build_push_image.outputs.result == 'true' }}
       uses: docker/setup-qemu-action@v3
 
     - name: Set up Docker Buildx
       id: buildx
-      if: ${{ steps.release_please.outputs[format('{0}--release_created', inputs.local-path)] || github.ref_name != 'main' }}
+      if: ${{ steps.should_build_push_image.outputs.result == 'true' }}
       uses: docker/setup-buildx-action@v3
       with:
         platforms: ${{ inputs.platforms }}
 
-    - name: Simulate build and push
-      if: ${{ steps.release_please.outputs[format('{0}--release_created', inputs.local-path)] || github.ref_name != 'main' }}
+    - name: Build and push
+      if: ${{ steps.should_build_push_image.outputs.result == 'true' }}
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{ steps.package_path.outputs.path }}
+        build-args: |
+          AZDO_NPM_REGISTRY_PULL_TOKEN="${{ inputs.azdo-pull-token }}"
+          PG_VERSION=${{ inputs.pg-version }}
+          NODE_VERSION=${{ inputs.node-version }}
+          ES_VERSION=${{ inputs.es-version }}
+        platforms: ${{ inputs.platforms }}
+        push: ${{ steps.should_build_push_image.outputs.result == 'true' }}
+        tags: ${{ env.TAGS }}
+        file: ${{ steps.package_path.outputs.path }}/${{ inputs.dockerfile }}
+
+    - name: Give Image name
+      if: ${{ steps.should_build_push_image.outputs.result == 'true' }}
       shell: bash
       run: |
         echo "L'image a été publiée sous le nom ${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
         echo "Les tags sont : ${{ env.TAGS }}"
-    
-    - name: Give Image name
-      if: ${{ steps.release_please.outputs[format('{0}--release_created', inputs.local-path)] || github.ref_name != 'main' }}
-      shell: bash
-      run: |
-        echo "L'image a été publiée sous le nom ${{ inputs.acr-host }}/${{ env.image_name }}:v${{ env.new_version }}"
+
+    - name: Sysdig secure scan
+      if: ${{ inputs.sysdig-api-token != '' && steps.should_build_push_image.outputs.result == 'true' }}
+      uses: sysdiglabs/scan-action@v5
+      with:
+        image-tag: ${{ env.new_tag }}
+        # API token for Sysdig Scanning auth
+        sysdig-secure-token: ${{ inputs.sysdig-api-token }}
+        sysdig-secure-url: "https://eu1.app.sysdig.com"
+        registry-user: ${{ inputs.acr-push-user }}
+        registry-password: ${{ inputs.acr-push-password }}
+        # dockerfile-path: ${{ steps.package_path.outputs.path }}
+        # input-type: docker-daemon
+        ignore-failed-scan: true

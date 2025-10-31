@@ -1,0 +1,23 @@
+# XXX: Imported from https://github.com/elastic/beats/blob/7.12/filebeat/module/postgresql/log/manifest.yml
+module_version: "1.0"
+
+var:
+  - name: paths
+    default:
+      - /var/log/postgresql/postgresql-*-*.log*
+      - /var/log/postgresql/postgresql-*-*.csv*
+    os.darwin:
+      - /usr/local/var/postgres/*.log*
+      - /usr/local/var/postgres/*.csv
+    os.windows:
+      - "c:/Program Files/PostgreSQL/*/logs/*.log*"
+      - "c:/Program Files/PostgreSQL/*/logs/*.csv"
+
+ingest_pipeline:
+  # BEGIN PADOA
+  - ingest/pipeline-permissive.yml # this is the default pipline that is used by filebeat
+  # END PADOA
+  - ingest/pipeline.yml
+  - ingest/pipeline-log.yml
+  - ingest/pipeline-csv.yml
+input: config/log.yml

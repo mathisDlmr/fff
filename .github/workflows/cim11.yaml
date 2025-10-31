@@ -1,13 +1,15 @@
 name: Build CIM11
-
 on:
   workflow_dispatch:
   pull_request:
     branches:
       - main
+    paths:
+      - 'medical/cim11/**'
+      - '.github/workflows/cim11.yaml'
   push:
     paths:
-      - 'images/cim11/**'
+      - 'medical/cim11/**'
       - '.github/workflows/cim11.yaml'
 
 permissions:
@@ -18,7 +20,7 @@ jobs:
   build-push:
     defaults:
       run:
-        working-directory: images/cim11
+        working-directory: medical/cim11
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,7 +28,9 @@ jobs:
       - name: build and push
         uses: ./.github/actions/build_push_image
         with:
-          local-path: images/cim11
-          image-path: medical/cim11
+          acr-host: ${{ secrets.ACR_HOST }}
+          acr-push-user: ${{ secrets.ACR_PUSH_USER }}
+          acr-push-password: ${{ secrets.ACR_PUSH_PASSWORD }}
+          azdo-pull-token: ${{ secrets.AZDO_NPM_REGISTRY_PULL_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           should-tag-latest: true

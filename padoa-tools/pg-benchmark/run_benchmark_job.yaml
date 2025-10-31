@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pg-benchmark-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pg-benchmark-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pg-benchmark-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: pg-benchmark-sa
+roleRef:
+  kind: Role
+  name: pg-benchmark-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-benchmark-job
+spec:
+  schedule: "0 6 * * thu"  # Run every Thursday at 6:00 AM
+  # schedule: "0 18 * * *"
+  timeZone: "Europe/Paris"
+  # suspend: true # TODO: Uncomment this when we want to run the job
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 300
+      backoffLimit: 3
+      template:
+        spec:
+          serviceAccountName: pg-benchmark-sa
+          containers:
+          - name: benchmark-runner
+            image: padoa.azurecr.io/padoa-tools/pg-benchmark:latest
+            env:
+            - name: POD_NAME
+              value: "medical-futura-acms-pg-7b46-0"
+          restartPolicy: Never

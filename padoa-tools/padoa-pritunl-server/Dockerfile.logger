@@ -1,0 +1,6 @@
+FROM python:3.9.23-slim
+
+RUN pip install pymongo
+ADD pritunl_logger.py /tmp
+
+CMD ["python", "/tmp/pritunl_logger.py"]

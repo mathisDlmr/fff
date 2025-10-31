@@ -1,0 +1,44 @@
+name: Build Padoa Postgis
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'padoa-tools/postgis/**'
+      - '.github/workflows/postgis.yaml'
+  push:
+    paths:
+      - 'padoa-tools/postgis/**'
+      - '.github/workflows/postgis.yaml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: padoa-tools/postgis
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        versions: [
+          { version: "14" }
+        ]
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v3.5.0
+        with:
+          ssh-key: ${{ secrets.SSH_KEY_SUBMODULES }}
+          submodules: recursive
+      - name: build and push
+        uses: ./.github/actions/build_push_image
+        with:
+          platforms: linux/arm64
+          acr-host: ${{ secrets.ACR_HOST }}
+          acr-push-user: ${{ secrets.ACR_PUSH_USER }}
+          acr-push-password: ${{ secrets.ACR_PUSH_PASSWORD }}
+          azdo-pull-token: ${{ secrets.AZDO_NPM_REGISTRY_PULL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

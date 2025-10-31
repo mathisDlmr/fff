@@ -1,0 +1,14 @@
+#!/bin/sh
+
+echo "{\"ip\": \"$VPN_PUBLIC_IP\"}" > ip
+python3 -m http.server &
+
+pritunl set-mongodb mongodb://$MONGO_HOST:27017/pritunl
+pritunl set app.public_ip_server "http://localhost:8000/ip"
+pritunl set app.reverse_proxy true
+pritunl set app.redirect_server false
+pritunl set app.server_ssl false # this has to be true when not behind an elb, but when using with an elb, this should be disabled if you're using an ACM cert on the load balancer
+pritunl set app.server_port 4911 # this should be your web ui port
+
+echo Starting Server
+pritunl start

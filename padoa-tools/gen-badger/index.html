@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>genBadger</title>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/{{ .Style }}.css"
+>
+<style>
+body, html {
+  height: 100%;
+  margin: 0;
+}
+.bg {
+  background-image: url("public/background.jpg");
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.selector {
+  float: right;
+}
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 95vh;
+}
+.window-body {
+    display: flex;
+    flex-direction: row;
+}
+.fset {
+    margin: 5px;
+    text-align: left;
+}
+.img {
+    margin-right: 10px;
+    width: 32px;
+    height: 32px;
+}
+.formi {
+    max-height: 50vh;
+    overflow-y: auto;
+}
+</style>
+</head>
+
+<body>
+  <div class="bg">
+    <select class="selector" id="selector">
+      <option value="xp">xp</option>
+      <option value="98">98</option>
+    </select>
+    <div class="center">
+      <div class="window">
+        <div class="title-bar">
+          <div class="title-bar-text">
+    	  Generate PgBadger
+    	</div>
+
+          <div class="title-bar-controls">
+            <button aria-label="Minimize"></button>
+            <button aria-label="Maximize"></button>
+            <button aria-label="Close"></button>
+          </div>
+        </div>
+
+        <div class="window-body">
+    	<img class="img" src="/public/badger.png">
+    	<fieldset class="fset">
+    	  <legend>Available log files</legend>
+            <form class="formi" action="/generate">
+              {{ range $idx, $name := .LogFiles }}
+                <input type="checkbox" id="log{{$idx}}" name="{{$name}}" value="">
+                <label class="field-row" for="log{{$idx}}">{{$name}}</label><br>
+              {{ end }}
+
+    	    <section class="field-row" style="justify-content: flex-end">
+                <button type="submit">OK</button>
+                <button type="submit">Cancel</button>
+              </section>
+            </form>
+    	</fieldset>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.querySelector('#selector').addEventListener("change", function() {
+	document.cookie = `style=${this.value}`
+	window.location.reload();
+    });
+    document.getElementById('selector').value = "{{ .Style }}"
+  </script>
+</body>
+</html>

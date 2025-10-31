@@ -1,0 +1,48 @@
+name: Build Fake Blob Storage HTTPS
+on:
+  workflow_dispatch:
+    # inputs:
+    #   fixed-tags:
+    #     description: "Fixed tags to apply to the image"
+    #     required: false
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'padoa-tools/fake-blob-storage/**'
+      - '.github/workflows/fake-blob-storage-https.yml'
+  push:
+    paths:
+      - 'padoa-tools/fake-blob-storage/**'
+      - '.github/workflows/fake-blob-storage-https.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: padoa-tools/fake-blob-storage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.SSH_KEY_SUBMODULES }}
+          submodules: recursive
+      - name: build and push
+        uses: ./.github/actions/build_push_image
+        with:
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          dockerfile: Dockerfile.https
+          image-path: padoa-tools/fake-blob-storage-https
+          acr-host: ${{ secrets.ACR_HOST }}
+          acr-push-user: ${{ secrets.ACR_PUSH_USER }}
+          acr-push-password: ${{ secrets.ACR_PUSH_PASSWORD }}
+          azdo-pull-token: ${{ secrets.AZDO_NPM_REGISTRY_PULL_TOKEN }}
+          node-version: 20.16.0
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          should-tag-latest: true
+          # fixed-tags: ${{ inputs.fixed-tags }}

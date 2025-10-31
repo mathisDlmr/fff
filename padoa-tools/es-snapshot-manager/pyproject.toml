@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "es-snapshot-manager"
+version = "0.1.0"
+description = "Simple Python CLI to manage ES snapshots"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+elasticsearch = "8.6.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.12.1"
+mypy = "^1.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

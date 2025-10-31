@@ -1,0 +1,40 @@
+From f2e28bd5e0879915b0e3af02c1061d71bf7b8e28 Mon Sep 17 00:00:00 2001
+From: Pale-whale <pierre.p@padoa-group.com>
+Date: Tue, 21 Nov 2023 17:57:08 +0100
+Subject: [PATCH] test
+
+---
+ Dockerfile | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/Dockerfile b/Dockerfile
+index 2c31b5077..6ada2f1e2 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -126,12 +126,23 @@ RUN GIT_COMMIT=$GIT_COMMIT \
+     GOARCH=$TARGETARCH \
+     make argocd-all
+ 
++RUN  cd /tmp && \
++     wget https://github.com/camptocamp/helm-sops/archive/20200403-1.tar.gz && \
++     tar xzf 20200403-1.tar.gz && \
++     cd helm-sops-20200403-1 && \
++     go build
++
+ ####################################################################################################
+ # Final image
+ ####################################################################################################
+ FROM argocd-base
+ COPY --from=argocd-build /go/src/github.com/argoproj/argo-cd/dist/argocd* /usr/local/bin/
+ 
++USER root
++RUN mv /usr/local/bin/helm /usr/local/bin/_helm
++USER argocd
++COPY --from=argocd-build /tmp/helm-sops-20200403-1/helm-sops /usr/local/bin/helm
++
+ USER root
+ RUN ln -s /usr/local/bin/argocd /usr/local/bin/argocd-server && \
+     ln -s /usr/local/bin/argocd /usr/local/bin/argocd-repo-server && \
+-- 
+2.39.3 (Apple Git-145)
+

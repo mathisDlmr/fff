@@ -1,0 +1,51 @@
+From 6c6213359a8ee167fb4606f9e88f90339b92178c Mon Sep 17 00:00:00 2001
+From: Super Sayous <leosayous@gmail.com>
+Date: Sun, 26 Jul 2020 02:02:12 +0200
+Subject: [PATCH] feat: add patch cookies in env
+
+---
+ app/app.go | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/app/app.go b/app/app.go
+index 7864c6e..c90cd42 100644
+--- a/app/app.go
++++ b/app/app.go
+@@ -15,6 +15,8 @@ import (
+ 	"net/url"
+ 	"os"
+ 	"os/exec"
++	"regexp"
++	"fmt"
+ 	"strconv"
+ 	"strings"
+ 	"sync"
+@@ -37,6 +39,7 @@ type InitMessage struct {
+ 
+ type App struct {
+ 	command []string
++	env []string
+ 	options *Options
+ 
+ 	upgrader *websocket.Upgrader
+@@ -382,7 +385,17 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
+ 		}
+ 	}
+ 
++	env := os.Environ()
++	convert := func(cookieName string) string {
++		re := regexp.MustCompile(`[-+.]`)
++		return strings.ToUpper(re.ReplaceAllString(cookieName, "_"))
++	}
++	for _, c := range r.Cookies() {
++		env = append(env,fmt.Sprintf("COOKIE_%s=%s", convert(c.Name), c.Value))
++	}
++
+ 	cmd := exec.Command(app.command[0], argv...)
++	cmd.Env = env
+ 	ptyIo, err := pty.Start(cmd)
+ 	if err != nil {
+ 		log.Print("Failed to execute command")
+-- 
+2.25.1
+

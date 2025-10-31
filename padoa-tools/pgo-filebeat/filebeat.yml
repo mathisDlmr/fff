@@ -1,0 +1,70 @@
+filebeat:
+  # List of inputs.
+  inputs: []
+  #   [{"type": "log", "paths": ["/tmp/*.log"]}]
+
+  config:
+    modules:
+      path: "${path.config}/modules.d/*.yml"
+
+  modules:
+    - module: postgresql
+      log:
+        enabled: true
+        var.paths: ["${PGLOGDIR:/tmp}/*.log*"]
+
+  registry:
+    path: "${REGISTRY_DIR:/pgdata}/registry"
+
+# Configure what outputs to use when sending the data collected by the beat.
+# Multiple outputs may be used.
+output:
+  elasticsearch:
+    hosts:
+      [
+        "${OPENSEARCH_HOST:logging-opensearch.back.padoa}:${OPENSEARCH_PORT:9200}",
+      ]
+    index: "${INDEX_PATTERN:postgresql}-%{+yyyy-MM-dd}"
+
+setup:
+  template:
+    name: "postgresql"
+    pattern: "${INDEX_PATTERN:postgresql}-*"
+    enabled: true
+  ilm:
+    enabled: false
+
+logging:
+  metrics:
+    enabled: false
+
+processors:
+  - drop_fields:
+      fields:
+        [
+          "aws",
+          "azure",
+          "cef",
+          "checkpoint",
+          "crowdstrike",
+          "file",
+          "gsuite",
+          "junyper",
+          "microsoft",
+          "misp",
+          "netflow",
+          "rsa",
+          "sophos",
+          "suricata",
+          "tls",
+          "x509",
+          "zeek",
+          "zoom",
+        ]
+      ignore_missing: true
+  - add_fields:
+      target: kubernetes
+      fields:
+        host: "${KUBERNETES_HOST:}"
+        namespace_name: "${KUBERNETES_NAMESPACE_NAME:}"
+        pod_name: "${KUBERNETES_POD_NAME:}"

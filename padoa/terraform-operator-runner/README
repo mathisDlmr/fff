@@ -1,0 +1,6 @@
+Files copied from https://github.com/isaaguilar/terraform-operator/tree/master/docker/terraform
+The purpose of this image is to act as a runner for the terraform operator.
+
+# Build of the no-lock image
+
+Update the tag in the github workflow and push on master

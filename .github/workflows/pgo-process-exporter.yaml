@@ -1,0 +1,39 @@
+name: Build PGO Process Exporter
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'padoa-tools/pgo-process-exporter/**'
+      - '.github/workflows/pgo-process-exporter.yaml'
+  push:
+    paths:
+      - 'padoa-tools/pgo-process-exporter/**'
+      - '.github/workflows/pgo-process-exporter.yaml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: padoa-tools/pgo-process-exporter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v3.5.0
+        with:
+          ssh-key: ${{ secrets.SSH_KEY_SUBMODULES }}
+          submodules: recursive
+      - name: build and push
+        uses: ./.github/actions/build_push_image
+        with:
+          acr-host: ${{ secrets.ACR_HOST }}
+          acr-push-user: ${{ secrets.ACR_PUSH_USER }}
+          acr-push-password: ${{ secrets.ACR_PUSH_PASSWORD }}
+          azdo-pull-token: ${{ secrets.AZDO_NPM_REGISTRY_PULL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          should-tag-latest: true

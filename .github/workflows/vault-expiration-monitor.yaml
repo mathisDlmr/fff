@@ -1,0 +1,36 @@
+name: Build Vault Expiration Monitor
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'padoa-tools/vault-expiration-monitor/**'
+      - '.github/workflows/vault-expiration-monitor.yaml'
+  push:
+    paths:
+      - 'padoa-tools/vault-expiration-monitor/**'
+      - '.github/workflows/vault-expiration-monitor.yaml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-push:
+    defaults:
+      run:
+        working-directory: padoa-tools/vault-expiration-monitor
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+      - name: build and push
+        uses: ./.github/actions/build_push_image
+        with:
+          acr-host: ${{ secrets.ACR_HOST }}
+          acr-push-user: ${{ secrets.ACR_PUSH_USER }}
+          acr-push-password: ${{ secrets.ACR_PUSH_PASSWORD }}
+          azdo-pull-token: ${{ secrets.AZDO_NPM_REGISTRY_PULL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+

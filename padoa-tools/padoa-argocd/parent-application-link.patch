@@ -1,0 +1,32 @@
+From 9d436f2c5f4026b2bf9899ec3479244928bd2dca Mon Sep 17 00:00:00 2001
+From: Antoine Bardoux <antoine.b@padoa-group.com>
+Date: Fri, 29 Apr 2022 11:46:13 +0200
+Subject: [PATCH 1/1] Reapply second patch
+
+Signed-off-by: Antoine Bardoux <antoine.b@padoa-group.com>
+---
+ .../application-details/application-details.tsx           | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/ui/src/app/applications/components/application-details/application-details.tsx b/ui/src/app/applications/components/application-details/application-details.tsx
+index 430149b8c..ae70c7656 100644
+--- a/ui/src/app/applications/components/application-details/application-details.tsx
++++ b/ui/src/app/applications/components/application-details/application-details.tsx
+@@ -231,6 +231,14 @@ export class ApplicationDetails extends React.Component<RouteComponentProps<{nam
+                                         toolbar={{
+                                             breadcrumbs: [
+                                                 {title: 'Applications', path: '/applications'},
++                                                ...(application.metadata.labels && 'argocd.argoproj.io/instance' in application.metadata.labels
++                                                    ? [
++                                                          {
++                                                              title: application.metadata.labels['argocd.argoproj.io/instance'],
++                                                              path: `/applications/${application.metadata.labels['argocd.argoproj.io/instance']}`
++                                                          }
++                                                      ]
++                                                    : []),
+                                                 {title: <ApplicationsDetailsAppDropdown appName={this.props.match.params.name} />}
+                                             ],
+                                             actionMenu: {items: this.getApplicationActionMenu(application, true)},
+-- 
+2.35.1
+

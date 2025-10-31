@@ -1,0 +1,29 @@
+FROM node:20.16.0-slim AS dist
+
+ARG BUILD_ENV
+# Install required dependencies for mkcert
+RUN apt update && apt install -y faketime libnss3-tools curl && \
+    curl -L -o /usr/local/bin/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64 && \
+    chmod +x /usr/local/bin/mkcert
+
+WORKDIR /src
+
+COPY package.json yarn.lock /src/
+
+RUN npm run yarn
+
+COPY . /src
+
+# Generate self-signed certificates using mkcert
+RUN mkcert -install && \
+    mkcert -key-file /src/cert-key.pem -cert-file /src/cert.pem localhost
+
+RUN mkdir ./data
+
+EXPOSE 10000
+
+COPY ./libfaketime.sh /libfaketime.sh
+
+ENTRYPOINT [ "/libfaketime.sh", "docker-entrypoint.sh" ]
+
+CMD ["npm", "run","start:https"]
